@@ -20,7 +20,7 @@ outdir = file(params.outdir)
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName, file) }
+    .map { file -> tuple(file.baseName, file, file + '.bai') }
     .into { call_bams; genotype_bams }
 
 log.info("Alignments: ${params.bams}")
@@ -30,7 +30,7 @@ process smoove_call {
     publishDir "$outdir", mode: "copy"
 
     input:
-    set sample, file(bam) from call_bams
+    set sample, file(bam), file(bai) from call_bams
     file fasta
 
     output:
@@ -65,7 +65,7 @@ process smoove_genotype {
     publishDir "$outdir", mode: "copy"
 
     input:
-    set sample, file(bam) from genotype_bams
+    set sample, file(bam), file(bai) from genotype_bams
     file sites
 
     output:
