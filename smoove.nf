@@ -9,6 +9,7 @@ if( !params.fasta ) {
 if ( params.fasta ){
     fasta = file(params.fasta)
     if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
+    faidx = file(fasta + ".fai")
     log.info("Reference fasta: ${fasta}")
 }
 if ( params.bed ){
@@ -32,6 +33,7 @@ process smoove_call {
     input:
     set sample, file(bam), file(bai) from call_bams
     file fasta
+    file faidx
 
     output:
     set sample, file("${sample}-smoove.genotyped.vcf.gz") into vcfs
@@ -50,6 +52,7 @@ process smoove_merge {
     input:
     file vcfs
     file fasta
+    file faidx
 
     output:
     file("merged.sites.vcf.gz") into sites
@@ -67,6 +70,7 @@ process smoove_genotype {
     input:
     set sample, file(bam), file(bai) from genotype_bams
     file sites
+    file faidx
 
     output:
     set sample, file("${sample}-joint-smoove.genotyped.vcf.gz.csi")
