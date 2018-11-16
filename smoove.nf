@@ -1,6 +1,3 @@
-// PATH=/scratch/ucgd/lustre/u6000771/Data/gemini_install2/tools/bin:/scratch/ucgd/lustre/u6000771/Data/gemini_install2/data/anaconda/bin/:$PATH:~u6000771/bin
-// PATH=~/Projects/src/lumpy-sv/bin:$PATH
-
 params.bed = false
 params.fasta = false
 params.bams = false
@@ -12,19 +9,21 @@ if( !params.fasta ) {
 if ( params.fasta ){
     fasta = file(params.fasta)
     if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
+    log.info("Reference fasta: ${fasta}")
 }
 if ( params.bed ){
     bed_file = file(params.bed)
     if ( !bed_file.exists() ) exit 1, "Bed file specified [${params.bed}], but does not exist"
+    log.info("Excluded regions: ${params.bed}")
 }
-
-
 outdir = file(params.outdir)
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName, file) }
     .into { call_bams; genotype_bams }
+
+log.info("Alignments: ${params.bams}")
 
 process smoove_call {
     tag "smoove call: $sample"
@@ -41,7 +40,6 @@ process smoove_call {
     script:
     exclude = params.bed ? "--exclude ${params.bed}" : ''
     """
-    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/scratch/ucgd/lustre/work/u6000771/Projects/src/htslib/
     smoove call --genotype --name $sample --fasta $fasta $exclude $bam
     """
 }
@@ -76,7 +74,6 @@ process smoove_genotype {
 
     script:
     """
-    export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/scratch/ucgd/lustre/work/u6000771/Projects/src/htslib/
     smoove genotype -d -p ${task.cpus} -o ./ --name ${sample}-joint --fasta $fasta --vcf $sites $bam
     """
 }
