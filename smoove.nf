@@ -50,7 +50,7 @@ process smoove_merge {
     publishDir "$outdir", mode: "copy"
 
     input:
-    file ('*') from vcfs.collect()
+    file ('*.vcf.gz*') from vcfs.collect()
     file fasta
     file faidx
 
@@ -59,7 +59,7 @@ process smoove_merge {
 
     script:
     """
-    smoove merge --name merged -f $fasta $vcfs
+    smoove merge --name merged -f $fasta *.vcf.gz
     """
 }
 
