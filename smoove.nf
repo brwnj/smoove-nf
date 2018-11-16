@@ -50,7 +50,7 @@ process smoove_merge {
     publishDir "$outdir", mode: "copy"
 
     input:
-    file vcfs.collect()
+    file ('*') from vcfs.collect()
     file fasta
     file faidx
 
