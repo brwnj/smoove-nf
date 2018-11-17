@@ -37,7 +37,7 @@ process smoove_call {
 
     output:
     set sample, file("${sample}-smoove.genotyped.vcf.gz") into vcfs
-    set sample, file("${sample}-smoove.genotyped.vcf.gz.csi") into vcfs_idxs
+    set sample, file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
 
     script:
     exclude = params.bed ? "--exclude ${params.bed}" : ''
@@ -50,8 +50,8 @@ process smoove_merge {
     publishDir "$outdir", mode: "copy"
 
     input:
-    file ('*.vcf.gz') from vcfs.collect()
-    file ('*.vcf.gz.csi') from vcfs_idxs.collect()
+    file vcf from vcfs.collect()
+    file idx from idxs.collect()
     file fasta
     file faidx
 
@@ -60,7 +60,7 @@ process smoove_merge {
 
     script:
     """
-    smoove merge --name merged -f $fasta *-smoove.genotyped.vcf.gz
+    smoove merge --name merged -f $fasta $vcf
     """
 }
 
