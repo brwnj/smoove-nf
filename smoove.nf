@@ -36,8 +36,8 @@ process smoove_call {
     file faidx
 
     output:
-    set sample, file("${sample}-smoove.genotyped.vcf.gz") into vcfs
-    set sample, file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
+    file("${sample}-smoove.genotyped.vcf.gz") into vcfs
+    file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
 
     script:
     exclude = params.bed ? "--exclude ${params.bed}" : ''
