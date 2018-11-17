@@ -60,7 +60,7 @@ process smoove_merge {
 
     script:
     """
-    smoove merge --name merged -f $fasta *.vcf.gz
+    smoove merge --name merged -f $fasta *-smoove.genotyped.vcf.gz
     """
 }
 
