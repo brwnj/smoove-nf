@@ -48,6 +48,7 @@ process smoove_call {
 
 process smoove_merge {
     publishDir "$outdir", mode: "copy"
+    cache 'deep'
 
     input:
     file vcf from vcfs.collect()
