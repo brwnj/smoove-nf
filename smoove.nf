@@ -72,6 +72,7 @@ process smoove_genotype {
     input:
     set sample, file(bam), file(bai) from genotype_bams
     file sites
+    file fasta
     file faidx
 
     output:
