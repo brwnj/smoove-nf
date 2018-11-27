@@ -27,8 +27,9 @@ Channel
 log.info("Alignments: ${params.bams}")
 
 process smoove_call {
-    tag "smoove call: $sample"
+    tag "sample: $sample"
     publishDir "$outdir", mode: "copy"
+    cpus 1
 
     input:
     set sample, file(bam), file(bai) from call_bams
@@ -42,7 +43,7 @@ process smoove_call {
     script:
     exclude = params.bed ? "--exclude ${params.bed}" : ''
     """
-    smoove call --genotype --name $sample --fasta $fasta $exclude $bam
+    smoove call --genotype --name $sample -p ${task.cpus} --fasta $fasta $exclude $bam
     """
 }
 
@@ -66,8 +67,9 @@ process smoove_merge {
 }
 
 process smoove_genotype {
-    tag "smoove genotype: $sample"
+    tag "sample: $sample"
     publishDir "$outdir", mode: "copy"
+    cpus 1
 
     input:
     set sample, file(bam), file(bai) from genotype_bams
