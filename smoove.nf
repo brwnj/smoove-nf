@@ -35,15 +35,15 @@ process smoove_call {
     set sample, file(bam), file(bai) from call_bams
     file fasta
     file faidx
+    file bed_file
 
     output:
     file("${sample}-smoove.genotyped.vcf.gz") into vcfs
     file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
 
     script:
-    exclude = params.bed ? "--exclude ${params.bed}" : ''
     """
-    smoove call --genotype --name $sample -p ${task.cpus} --fasta $fasta $exclude $bam
+    smoove call --genotype --name $sample -p ${task.cpus} --fasta $fasta --exclude $bed_file $bam
     """
 }
 
