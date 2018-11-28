@@ -21,7 +21,7 @@ outdir = file(params.outdir)
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName, file, file + '.bai') }
+    .map { file -> tuple(file.baseName, file, file + '.crai') }
     .into { call_bams; genotype_bams }
 
 log.info("Alignments: ${params.bams}")
