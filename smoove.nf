@@ -1,11 +1,15 @@
+import java.nio.file.Paths
+
 params.bed = false
 params.fasta = false
 params.bams = false
 params.outdir = false
 params.excludechroms = false
-
+params.project = false
 
 gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
+project = params.project ?: 'smoove-project'
+outdir = file(Paths(params.outdir, project)
 
 if( !params.fasta ) {
     exit 1, "No reference fasta was supplied"
@@ -23,7 +27,6 @@ if ( params.bed ){
     log.info("Excluded regions: ${params.bed}")
 }
 log.info("Alignments: ${params.bams}")
-outdir = file(params.outdir)
 log.info("Output: ${outdir}")
 
 Channel
@@ -64,11 +67,11 @@ process smoove_merge {
     file faidx
 
     output:
-    file("merged.sites.vcf.gz") into sites
+    file("${project}.sites.vcf.gz") into sites
 
     script:
     """
-    smoove merge --name merged --fasta $fasta $vcf
+    smoove merge --name $project --fasta $fasta $vcf
     """
 }
 
@@ -84,8 +87,8 @@ process smoove_genotype {
     file faidx
 
     output:
-    file("${sample}-joint-smoove.genotyped.vcf.gz.csi") into genotyped_idxs
-    file("${sample}-joint-smoove.genotyped.vcf.gz") into genotyped_vcfs
+    file("${sample}-smoove.genotyped.vcf.gz.csi") into genotyped_idxs
+    file("${sample}-smoove.genotyped.vcf.gz") into genotyped_vcfs
 
     script:
     """
@@ -95,7 +98,7 @@ process smoove_genotype {
     export REF_CACHE=xx
 
     samtools quickcheck -v $bam
-    smoove genotype --duphold --processes ${task.cpus} --removepr --outdir ./ --name ${sample}-joint --fasta $fasta --vcf $sites $bam
+    smoove genotype --duphold --processes ${task.cpus} --removepr --outdir ./ --name ${sample} --fasta $fasta --vcf $sites $bam
     """
 }
 
@@ -114,10 +117,10 @@ process smoove_square {
 
     script:
     """
-    smoove paste --outdir ./ --name $name *.vcf.gz FIXME
+    smoove paste --outdir ./ --name $project $vcf
 
     wget -q $gff
-    smoove annotate --gff ${gff.split("\\/")[-1]} $vcf | bgzip --threads ${task.cpus} -c > $square_vcf
+    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
     bcftools index $square_vcf
     """
 }
