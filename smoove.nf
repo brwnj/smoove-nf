@@ -1,5 +1,3 @@
-import java.nio.file.Paths
-
 params.bed = false
 params.fasta = false
 params.bams = false
@@ -9,7 +7,7 @@ params.project = false
 
 gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
 project = params.project ?: 'smoove-project'
-outdir = file(Paths("${params.outdir}", "${project}"))
+outdir = file([params.outdir, project].join(File.separator))
 
 if( !params.fasta ) {
     exit 1, "No reference fasta was supplied"
