@@ -27,7 +27,7 @@ log.info("Output: ${outdir}")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName.split("\\.")[0], file, file + '.crai' ) }
+    .map { file -> tuple(file.baseName.split("\\.")[0], file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
     .into { call_bams; genotype_bams }
 
 process smoove_call {
