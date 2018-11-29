@@ -2,6 +2,10 @@ params.bed = false
 params.fasta = false
 params.bams = false
 params.outdir = false
+params.excludechroms = false
+
+
+gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
 
 if( !params.fasta ) {
     exit 1, "No reference fasta was supplied"
@@ -10,25 +14,26 @@ if ( params.fasta ){
     fasta = file(params.fasta)
     if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
     faidx = file(fasta + ".fai")
+    if( !faidx.exists() ) exit 1, "Fasta index file not found: ${params.fasta}.fai"
     log.info("Reference fasta: ${fasta}")
 }
 if ( params.bed ){
     bed_file = file(params.bed)
-    if ( !bed_file.exists() ) exit 1, "Bed file specified [${params.bed}], but does not exist"
+    if ( !bed_file.exists() ) exit 1, "Bed file not found: ${params.bed}"
     log.info("Excluded regions: ${params.bed}")
 }
+log.info("Alignments: ${params.bams}")
 outdir = file(params.outdir)
+log.info("Output: ${outdir}")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName, file, file + (file.endsWith('.cram') ? '.crai' : '.bai')) }
+    .map { file -> tuple(file.split("\\.")[0], file, file + (file.endsWith('.cram') ? '.crai' : '.bai')) }
     .into { call_bams; genotype_bams }
-
-log.info("Alignments: ${params.bams}")
 
 process smoove_call {
     tag "sample: $sample"
-    publishDir "$outdir", mode: "copy"
+    publishDir path: "$outdir/smoove-called", mode: "copy"
     cpus 1
 
     input:
@@ -42,13 +47,14 @@ process smoove_call {
     file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
 
     script:
+    excludechroms = params.excludechroms ? '--excludechroms "${params.excludechroms}"' : ''
     """
-    smoove call --genotype --name $sample -p ${task.cpus} --fasta $fasta --exclude $bed_file $bam
+    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed_file $excludechroms $bam
     """
 }
 
 process smoove_merge {
-    publishDir "$outdir", mode: "copy"
+    publishDir path: "$outdir/smoove-merged", mode: "copy"
     cache 'deep'
 
     input:
@@ -62,13 +68,13 @@ process smoove_merge {
 
     script:
     """
-    smoove merge --name merged -f $fasta $vcf
+    smoove merge --name merged --fasta $fasta $vcf
     """
 }
 
 process smoove_genotype {
     tag "sample: $sample"
-    publishDir "$outdir", mode: "copy"
+    publishDir path: "$outdir/smoove-genotyped", mode: "copy"
     cpus 1
 
     input:
@@ -78,11 +84,41 @@ process smoove_genotype {
     file faidx
 
     output:
-    set sample, file("${sample}-joint-smoove.genotyped.vcf.gz.csi")
-    set sample, file("${sample}-joint-smoove.genotyped.vcf.gz")
+    file("${sample}-joint-smoove.genotyped.vcf.gz.csi") into genotyped_idxs
+    file("${sample}-joint-smoove.genotyped.vcf.gz") into genotyped_vcfs
 
     script:
     """
-    smoove genotype -d -p ${task.cpus} -o ./ --name ${sample}-joint --fasta $fasta --vcf $sites $bam
+    wget -q https://raw.githubusercontent.com/samtools/samtools/develop/misc/seq_cache_populate.pl
+    perl seq_cache_populate.pl -root \$(pwd)/cache $fasta 1> /dev/null 2> err || (cat err; exit 2)
+    export REF_PATH=\$(pwd)/cache/%2s/%2s/%s:http://www.ebi.ac.uk/ena/cram/md5/%s
+    export REF_CACHE=xx
+
+    samtools quickcheck -v $bam
+    smoove genotype --duphold --processes ${task.cpus} --removepr --outdir ./ --name ${sample}-joint --fasta $fasta --vcf $sites $bam
+    """
+}
+
+process smoove_square {
+    publishDir path: "$outdir/smoove-squared", mode: "copy"
+    cache 'deep'
+    cpus 3
+
+    input:
+    file vcf from genotyped_vcfs.collect()
+    file idx from genotyped_idxs.collect()
+
+    output:
+    file("square.anno.vcf.gz") into square_vcf
+    file("square.anno.vcf.gz.csi") into square_idx
+
+    script:
+    gff_file = gff.split("\\/")[-1]
+    """
+    smoove paste --outdir ./ --name $name *.vcf.gz FIXME
+
+    wget -q $gff
+    smoove annotate --gff $gff_file $vcf | bgzip --threads ${task.cpus} -c > $square_vcf
+    bcftools index $square_vcf
     """
 }
