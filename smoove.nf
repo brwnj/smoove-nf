@@ -28,7 +28,7 @@ log.info("Output: ${outdir}")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.split("\\.")[0], file, file + (file.endsWith('.cram') ? '.crai' : '.bai')) }
+    .map { file -> tuple(file.baseName.split("\\.")[0], file, file + (file.endsWith('.cram') ? '.crai' : '.bai')) }
     .into { call_bams; genotype_bams }
 
 process smoove_call {
@@ -47,7 +47,7 @@ process smoove_call {
     file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
 
     script:
-    excludechroms = params.excludechroms ? '--excludechroms "${params.excludechroms}"' : ''
+    excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''
     """
     smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed_file $excludechroms $bam
     """
