@@ -113,12 +113,11 @@ process smoove_square {
     file("square.anno.vcf.gz.csi") into square_idx
 
     script:
-    gff_file = gff.split("\\/")[-1]
     """
     smoove paste --outdir ./ --name $name *.vcf.gz FIXME
 
     wget -q $gff
-    smoove annotate --gff $gff_file $vcf | bgzip --threads ${task.cpus} -c > $square_vcf
+    smoove annotate --gff ${gff.split("\\/")[-1]} $vcf | bgzip --threads ${task.cpus} -c > $square_vcf
     bcftools index $square_vcf
     """
 }
