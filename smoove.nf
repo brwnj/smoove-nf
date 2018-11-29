@@ -9,6 +9,7 @@ gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapien
 project = params.project ?: 'smoove-project'
 outdir = file([params.outdir, project].join(File.separator))
 
+log.info("Project: ${project}")
 if( !params.fasta ) {
     exit 1, "No reference fasta was supplied"
 }
@@ -24,7 +25,9 @@ if ( params.bed ){
     if ( !bed_file.exists() ) exit 1, "Bed file not found: ${params.bed}"
     log.info("Excluded regions: ${params.bed}")
 }
+if( params.excludechroms ) log.info("Excluded Chroms: ${params.excludechroms}")
 log.info("Alignments: ${params.bams}")
+log.info("Annotation GFF: ${gff}")
 log.info("Output: ${outdir}")
 
 Channel
@@ -114,11 +117,12 @@ process smoove_square {
     file("square.anno.vcf.gz.csi") into square_idx
 
     script:
+    gff_file = gff.split("\\/")[-1]
     """
     smoove paste --outdir ./ --name $project $vcf
 
     wget -q $gff
-    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
+    smoove annotate --gff $gff_file ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
     bcftools index $square_vcf
     """
 }
