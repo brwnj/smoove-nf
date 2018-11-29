@@ -27,9 +27,9 @@ log.info("Output: ${outdir}")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName.split("\\.")[0], file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
+    .map { file -> tuple(file.baseName.split("\\.")[0], file, file + '.crai' ) }
     .into { call_bams; genotype_bams }
-log.info(call_bams)
+
 process smoove_call {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-called", mode: "copy"
