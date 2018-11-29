@@ -113,16 +113,15 @@ process smoove_square {
     file idx from genotyped_idxs.collect()
 
     output:
-    file("square.anno.vcf.gz") into square_vcf
-    file("square.anno.vcf.gz.csi") into square_idx
+    file("${project}.smoove.square.anno.vcf.gz") into square_vcf
+    file("${project}.smoove.square.anno.vcf.gz.csi") into square_idx
 
     script:
-    gff_file = gff.split("\\/")[-1]
     """
     smoove paste --outdir ./ --name $project $vcf
 
     wget -q $gff
-    smoove annotate --gff $gff_file ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
+    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
     bcftools index $square_vcf
     """
 }
