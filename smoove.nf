@@ -9,23 +9,18 @@ gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapien
 project = params.project ?: 'smoove-project'
 outdir = file([params.outdir, project].join(File.separator))
 
+fasta = file(params.fasta)
+if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
+faidx = file(fasta + ".fai")
+if( !faidx.exists() ) exit 1, "Fasta index file not found: ${params.fasta}.fai"
+
+bed_file = file(params.bed)
+if ( !bed_file.exists() ) exit 1, "Bed file not found: ${params.bed}"
+
 log.info("Project: ${project}")
-if( !params.fasta ) {
-    exit 1, "No reference fasta was supplied"
-}
-if ( params.fasta ){
-    fasta = file(params.fasta)
-    if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
-    faidx = file(fasta + ".fai")
-    if( !faidx.exists() ) exit 1, "Fasta index file not found: ${params.fasta}.fai"
-    log.info("Reference fasta: ${fasta}")
-}
-if ( params.bed ){
-    bed_file = file(params.bed)
-    if ( !bed_file.exists() ) exit 1, "Bed file not found: ${params.bed}"
-    log.info("Excluded regions: ${params.bed}")
-}
+log.info("Excluded regions: ${params.bed}")
 if( params.excludechroms ) log.info("Excluded Chroms: ${params.excludechroms}")
+log.info("Reference fasta: ${fasta}")
 log.info("Alignments: ${params.bams}")
 log.info("Annotation GFF: ${gff}")
 log.info("Output: ${outdir}")
@@ -121,7 +116,7 @@ process smoove_square {
     smoove paste --outdir ./ --name $project $vcf
 
     wget -q $gff
-    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > $square_vcf
-    bcftools index $square_vcf
+    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
+    bcftools index ${project}.smoove.square.anno.vcf.gz
     """
 }
