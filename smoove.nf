@@ -36,6 +36,9 @@ Channel
 process smoove_call {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-called", mode: "copy"
+    memory { 8.GB * task.attempt }
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
+    maxRetries 3
 
     input:
     set sample, file(bam), file(bai) from call_bams
@@ -57,6 +60,7 @@ process smoove_call {
 process smoove_merge {
     publishDir path: "$outdir/smoove-merged", mode: "copy"
     cache 'deep'
+    memory 15.GB
 
     input:
     file vcf from vcfs.collect()
@@ -103,6 +107,7 @@ process smoove_square {
     publishDir path: "$outdir/smoove-squared", mode: "copy"
     cache 'deep'
     cpus 3
+    memory 45.GB
 
     input:
     file vcf from genotyped_vcfs.collect()
