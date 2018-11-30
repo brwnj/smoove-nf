@@ -4,10 +4,11 @@ params.bams = false
 params.outdir = false
 params.excludechroms = false
 params.project = false
+params.gff = false
 
-gff = 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
-project = params.project ?: 'smoove-project'
-outdir = file([params.outdir, project].join(File.separator))
+gff = params.gff ?: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
+project = params.project ?: 'sites'
+outdir = file(params.outdir)
 
 fasta = file(params.fasta)
 if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
@@ -32,8 +33,7 @@ Channel
 
 process smoove_call {
     tag "sample: $sample"
-    // publishDir path: "$outdir/smoove-called", mode: "copy"
-    cpus 1
+    publishDir path: "$outdir/smoove-called", mode: "copy"
 
     input:
     set sample, file(bam), file(bai) from call_bams
@@ -53,7 +53,7 @@ process smoove_call {
 }
 
 process smoove_merge {
-    // publishDir path: "$outdir/smoove-merged", mode: "copy"
+    publishDir path: "$outdir/smoove-merged", mode: "copy"
     cache 'deep'
 
     input:
@@ -73,8 +73,7 @@ process smoove_merge {
 
 process smoove_genotype {
     tag "sample: $sample"
-    // publishDir path: "$outdir/smoove-genotyped", mode: "copy"
-    cpus 1
+    publishDir path: "$outdir/smoove-genotyped", mode: "copy"
 
     input:
     set sample, file(bam), file(bai) from genotype_bams
@@ -99,7 +98,7 @@ process smoove_genotype {
 }
 
 process smoove_square {
-    // publishDir path: "$outdir/smoove-squared", mode: "copy"
+    publishDir path: "$outdir/smoove-squared", mode: "copy"
     cache 'deep'
     cpus 3
 
