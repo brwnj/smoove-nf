@@ -8,19 +8,14 @@ params.gff = false
 
 gff = params.gff ?: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
 project = params.project ?: 'sites'
-outdir = file(params.outdir)
-
-fasta = file(params.fasta)
-if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
-faidx = file(fasta + ".fai")
-if( !faidx.exists() ) exit 1, "Fasta index file not found: ${params.fasta}.fai"
-
-bed = file(params.bed)
-if ( !bed.exists() ) exit 1, "Bed file not found: ${params.bed}"
+outdir = params.outdir
+fasta = params.fasta
+faidx = "${fasta}.fai"
+bed = params.bed
 
 log.info("\n")
 log.info("Project: ${project}")
-log.info("Excluded regions: ${params.bed}")
+log.info("Excluded regions: ${bed}")
 if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
 log.info("Reference fasta: ${fasta}")
 log.info("Alignments: ${params.bams}")
