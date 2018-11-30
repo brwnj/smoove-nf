@@ -15,8 +15,9 @@ nextflow run brwnj/smoove-nf --bams 'SRP1234/alignments/*.cram'
 
 ### `--project`
 
-Names the results directory within `--outdir` and acts as the file prefix
-for merged and squared sites.
+Acts as the file prefix for merged and squared sites.
+
+* Default: 'sites'
 
 ```
 nextflow run brwnj/smoove-nf --project SRP1234
@@ -40,12 +41,10 @@ nextflow run brwnj/smoove-nf --bed /assets/regions.exclude.bed.gz
 
 ### `--outdir`
 
-The base results directory for output. The project name (`--project`) gets
-appended such that when using `--project SRP1234` and
-`--outdir /scratch/projects`, results are written to `/scratch/projects/SRP1234`.
+The base results directory for output.
 
 ```
-nextflow run brwnj/smoove-nf --outdir /scratch/projects
+nextflow run brwnj/smoove-nf --outdir /scratch/projects/SRP1234
 ```
 
 ### `--excludechroms`
@@ -55,3 +54,9 @@ Chromosomes to exclude during `smoove call`. You should escape '$'.
 ```
 nextflow run brwnj/smoove-nf --excludechroms "hs37d5,~:,~^GL,~decoy,~random\$,~chrUn,~_alt\$"
 ```
+
+### `--gff`
+
+Annotation GFF used in `smoove annotate`.
+
+* Default: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
