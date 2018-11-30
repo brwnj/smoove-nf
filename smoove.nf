@@ -15,16 +15,18 @@ if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
 faidx = file(fasta + ".fai")
 if( !faidx.exists() ) exit 1, "Fasta index file not found: ${params.fasta}.fai"
 
-bed_file = file(params.bed)
-if ( !bed_file.exists() ) exit 1, "Bed file not found: ${params.bed}"
+bed = file(params.bed)
+if ( !bed.exists() ) exit 1, "Bed file not found: ${params.bed}"
 
+log.info("\n")
 log.info("Project: ${project}")
 log.info("Excluded regions: ${params.bed}")
-if( params.excludechroms ) log.info("Excluded Chroms: ${params.excludechroms}")
+if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
 log.info("Reference fasta: ${fasta}")
 log.info("Alignments: ${params.bams}")
 log.info("Annotation GFF: ${gff}")
 log.info("Output: ${outdir}")
+log.info("\n")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
@@ -39,7 +41,7 @@ process smoove_call {
     set sample, file(bam), file(bai) from call_bams
     file fasta
     file faidx
-    file bed_file
+    file bed
 
     output:
     file("${sample}-smoove.genotyped.vcf.gz") into vcfs
@@ -48,7 +50,7 @@ process smoove_call {
     script:
     excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''
     """
-    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed_file $excludechroms $bam
+    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam
     """
 }
 
