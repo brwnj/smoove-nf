@@ -32,7 +32,7 @@ Channel
 
 process smoove_call {
     tag "sample: $sample"
-    publishDir path: "$outdir/smoove-called", mode: "copy"
+    // publishDir path: "$outdir/smoove-called", mode: "copy"
     cpus 1
 
     input:
@@ -53,7 +53,7 @@ process smoove_call {
 }
 
 process smoove_merge {
-    publishDir path: "$outdir/smoove-merged", mode: "copy"
+    // publishDir path: "$outdir/smoove-merged", mode: "copy"
     cache 'deep'
 
     input:
@@ -73,7 +73,7 @@ process smoove_merge {
 
 process smoove_genotype {
     tag "sample: $sample"
-    publishDir path: "$outdir/smoove-genotyped", mode: "copy"
+    // publishDir path: "$outdir/smoove-genotyped", mode: "copy"
     cpus 1
 
     input:
@@ -99,7 +99,7 @@ process smoove_genotype {
 }
 
 process smoove_square {
-    publishDir path: "$outdir/smoove-squared", mode: "copy"
+    // publishDir path: "$outdir/smoove-squared", mode: "copy"
     cache 'deep'
     cpus 3
 
