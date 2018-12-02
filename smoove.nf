@@ -17,7 +17,7 @@ log.info("\n")
 log.info("Project: ${project}")
 log.info("Excluded regions: ${bed}")
 if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
-log.info("Reference fasta: ${fasta}")
+log.info("Reference fasta: ${fasta}, ${faidx}")
 log.info("Alignments: ${params.bams}")
 log.info("Annotation GFF: ${gff}")
 log.info("Output: ${outdir}")
@@ -32,8 +32,7 @@ process smoove_call {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-called", mode: "copy"
     memory { 8.GB * task.attempt }
-    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-    maxRetries 3
+    errorStrategy { task.attempt == 1 ? 'retry' : 'ignore' }
 
     input:
     set sample, file(bam), file(bai) from call_bams
