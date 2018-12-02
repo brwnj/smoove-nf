@@ -9,15 +9,15 @@ params.gff = false
 gff = params.gff ?: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
 project = params.project ?: 'sites'
 outdir = params.outdir
-fasta = params.fasta
-faidx = "${fasta}.fai"
-bed = params.bed
+fasta = file(params.fasta)
+faidx = file("${params.fasta}.fai")
+bed = file(params.bed)
 
 log.info("\n")
 log.info("Project: ${project}")
-log.info("Excluded regions: ${bed}")
+log.info("Excluded regions: ${params.bed}")
 if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
-log.info("Reference fasta: ${fasta}, ${faidx}")
+log.info("Reference fasta: ${params.fasta}")
 log.info("Alignments: ${params.bams}")
 log.info("Annotation GFF: ${gff}")
 log.info("Output: ${outdir}")
