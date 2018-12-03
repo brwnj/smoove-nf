@@ -12,6 +12,7 @@ outdir = params.outdir
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
+indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai'))
 
 log.info("\n")
 log.info("Project: ${project}")
@@ -27,6 +28,10 @@ Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName.split("\\.")[0], file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
     .into { call_bams; genotype_bams }
+
+Channel
+    .fromPath(indexes, checkIfExists: true)
+    .set { index_ch }
 
 process smoove_call {
     tag "sample: $sample"
@@ -118,5 +123,27 @@ process smoove_square {
     wget -q $gff
     smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
+    """
+}
+
+process run_indexcov {
+    publishDir path: "$outdir/indexcov", mode: "copy"
+
+    input:
+    file idx from index_ch.collect()
+    file faidx
+
+    output:
+    file("${project}/*.png")
+    file("${project}/*.html")
+    file("${project}/*.bed.gz")
+    file("${project}/*.ped")
+    file("${project}/*.roc")
+
+    script:
+    """
+    curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.0/goleft_linux64' > goleft
+    chmod +x goleft
+    ./goleft indexcov --directory $project --fai $fai $idx
     """
 }
