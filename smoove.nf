@@ -12,7 +12,7 @@ outdir = params.outdir
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
-indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai'))
+indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 log.info("\n")
 log.info("Project: ${project}")
