@@ -144,6 +144,6 @@ process run_indexcov {
     """
     curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.0/goleft_linux64' > goleft
     chmod +x goleft
-    ./goleft indexcov --directory $project --fai $fai $idx
+    ./goleft indexcov --directory $project --fai $faidx $idx
     """
 }
