@@ -134,16 +134,18 @@ process run_indexcov {
     file faidx
 
     output:
-    file("${project}/*.png")
-    file("${project}/*.html")
-    file("${project}/*.bed.gz")
-    file("${project}/*.ped")
-    file("${project}/*.roc")
+    file("${project}*.png")
+    file("${project}*.html")
+    file("${project}*.bed.gz")
+    file("${project}*.ped")
+    file("${project}*.roc")
 
     script:
+    excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
     """
     curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.0/goleft_linux64' > goleft
     chmod +x goleft
-    ./goleft indexcov --directory $project --fai $faidx $idx
+    ./goleft indexcov $excludepatt --directory $project --fai $faidx $idx
+    mv $project/* .
     """
 }
