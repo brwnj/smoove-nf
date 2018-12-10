@@ -34,7 +34,7 @@ Channel
     .set { index_ch }
 
 process run_flagstat {
-    tag: "sample: $sample"
+    tag "sample: $sample"
     publishDir path: "$outdir/logs", mode: "copy"
 
     input:
