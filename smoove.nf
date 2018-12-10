@@ -6,12 +6,12 @@ params.excludechroms = false
 params.project = false
 params.gff = false
 
-gff = params.gff ?: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
 project = params.project ?: 'sites'
 outdir = params.outdir
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
+gff = file(params.gff)
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 log.info("\n")
@@ -20,18 +20,34 @@ log.info("Excluded regions: ${params.bed}")
 if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
 log.info("Reference fasta: ${params.fasta}")
 log.info("Alignments: ${params.bams}")
-log.info("Annotation GFF: ${gff}")
+log.info("Annotation GFF: ${params.gff}")
 log.info("Output: ${outdir}")
 log.info("\n")
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName.split("\\.")[0], file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
-    .into { call_bams; genotype_bams }
+    .into { flagstat_bams; call_bams; genotype_bams }
 
 Channel
     .fromPath(indexes, checkIfExists: true)
     .set { index_ch }
+
+process run_flagstat {
+    tag: "sample: $sample"
+    publishDir path: "$outdir/logs", mode: "copy"
+
+    input:
+    set sample, file(bam), file(bai) from flagstat_bams
+
+    output:
+    file("${sample}-flagstat.txt") into sequence_counts
+
+    script:
+    """
+    samtools flagstat $bam > $sample-flagstat.txt
+    """
+}
 
 process smoove_call {
     tag "sample: $sample"
@@ -48,11 +64,13 @@ process smoove_call {
     output:
     file("${sample}-smoove.genotyped.vcf.gz") into vcfs
     file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
+    file("${sample}-stats.txt") into variant_counts
 
     script:
     excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''
     """
     smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam
+    bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
     """
 }
 
@@ -111,6 +129,7 @@ process smoove_square {
     input:
     file vcf from genotyped_vcfs.collect()
     file idx from genotyped_idxs.collect()
+    file gff
 
     output:
     file("${project}.smoove.square.anno.vcf.gz") into square_vcf
@@ -120,8 +139,7 @@ process smoove_square {
     """
     smoove paste --outdir ./ --name $project $vcf
 
-    wget -q $gff
-    smoove annotate --gff ${gff.split("\\/")[-1]} ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
+    smoove annotate --gff $gff ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
     """
 }
@@ -137,7 +155,7 @@ process run_indexcov {
     file("${project}*.png")
     file("${project}*.html")
     file("${project}*.bed.gz")
-    file("${project}*.ped")
+    file("${project}*.ped") into peds
     file("${project}*.roc")
 
     script:
@@ -148,4 +166,20 @@ process run_indexcov {
     ./goleft indexcov $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
     """
+}
+
+process build_report {
+    publishDir path: "$outdir", mode: "copy"
+
+    input:
+    file sequence_count from sequence_counts.collect()
+    file variant_count from variant_counts.collect()
+    file vcf from square_vcf
+    file ped from peds
+
+    output:
+    file("smoove-nf.html")
+
+    script:
+    template 'smoove-report.py'
 }
