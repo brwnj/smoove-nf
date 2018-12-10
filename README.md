@@ -58,5 +58,3 @@ nextflow run brwnj/smoove-nf --excludechroms "hs37d5,~:,~^GL,~decoy,~random\$,~c
 ### `--gff`
 
 Annotation GFF used in `smoove annotate`.
-
-* Default: 'ftp://ftp.ensembl.org/pub/grch37/release-84/gff3/homo_sapiens/Homo_sapiens.GRCh37.82.chr.gff3.gz'
