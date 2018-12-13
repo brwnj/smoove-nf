@@ -45,6 +45,8 @@ html = """
     <div class="container pb-20">
         <h1 id="summary" style="padding-top: 20px;">Sample Summary</h1>
         <table id="sample_table" class="table table-striped" width="100%"></table>
+        <br>
+        <p>Samples that fail to be called with <code>smoove call</code> tend to have a high number of variants and exceed RAM allocations. Failed samples are not included in the merged VCF (<code>smoove merge</code>), but are genotyped with <code>smoove genotype</code> and included in the annotated VCF.</p>
         <script>
         var success = '<span class="badge badge-success">Success</span>'
         var fail = '<span class="badge badge-danger">Fail</span>'
@@ -143,7 +145,7 @@ html = """
         [PCA_DIV]
 
         <h3>Genome Coverage</h3>
-        <p>Lower coverage samples have shorter curves where the proportion of regions covered drops off more quickly. This indicates a higher fraction of low coverage regions.</p>
+        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions.</p>
         <div class="container" id="cov_plot"></div>
             <div class="container pb-5">
             <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center" data-toggle="buttons">
@@ -426,56 +428,53 @@ html = """
         Plotly.newPlot('bnd_p2', bnd_p2_data, variant_hist_layout)
         </script>
 
-    </div>
-    <div class="jumbotron mb-0 pt-3 pb-3">
-        <div class="container">
-            <h1 id="configuration" style="padding-top: 20px;">Configuration</h1>
-            <h3>Parameters</h3>
-            <dl class="row small">
-                <dt class="col-sm-3"><code>--bams</code></dt>
-                <dd class="col-sm-9">${params.bams}</dd>
-                <dt class="col-sm-3"><code>--outdir</code></dt>
-                <dd class="col-sm-9">${params.outdir}</dd>
-                <dt class="col-sm-3"><code>--fasta</code></dt>
-                <dd class="col-sm-9">${params.fasta}</dd>
-                <dt class="col-sm-3"><code>--bed</code></dt>
-                <dd class="col-sm-9">${params.bed}</dd>
-                <dt class="col-sm-3"><code>--excludechroms</code></dt>
-                <dd class="col-sm-9">${params.excludechroms}</dd>
-                <dt class="col-sm-3"><code>--project</code></dt>
-                <dd class="col-sm-9">${params.project}</dd>
-                <dt class="col-sm-3"><code>--gff</code></dt>
-                <dd class="col-sm-9">${params.gff}</dd>
-            </dl>
+        <h1 id="configuration" style="padding-top: 20px;">Configuration</h1>
+        <h3>Parameters</h3>
+        <dl class="row small">
+            <dt class="col-sm-3"><code>--bams</code></dt>
+            <dd class="col-sm-9">${params.bams}</dd>
+            <dt class="col-sm-3"><code>--outdir</code></dt>
+            <dd class="col-sm-9">${params.outdir}</dd>
+            <dt class="col-sm-3"><code>--fasta</code></dt>
+            <dd class="col-sm-9">${params.fasta}</dd>
+            <dt class="col-sm-3"><code>--bed</code></dt>
+            <dd class="col-sm-9">${params.bed}</dd>
+            <dt class="col-sm-3"><code>--excludechroms</code></dt>
+            <dd class="col-sm-9">${params.excludechroms}</dd>
+            <dt class="col-sm-3"><code>--project</code></dt>
+            <dd class="col-sm-9">${params.project}</dd>
+            <dt class="col-sm-3"><code>--gff</code></dt>
+            <dd class="col-sm-9">${params.gff}</dd>
+        </dl>
 
-            <h3>Workflow</h3>
-            <dl class="row small">
-                <dt class="col-sm-3">Repository</dt>
-                <dd class="col-sm-9">$workflow.repository</dd>
-                <dt class="col-sm-3">Revision</dt>
-                <dd class="col-sm-9">$workflow.revision</dd>
-                <dt class="col-sm-3">Launch dir</dt>
-                <dd class="col-sm-9">$workflow.launchDir</dd>
-                <dt class="col-sm-3">Work dir</dt>
-                <dd class="col-sm-9">$workflow.workDir</dd>
-                <dt class="col-sm-3">Config files</dt>
-                <dd class="col-sm-9">$workflow.configFiles</dd>
-                <dt class="col-sm-3">Container</dt>
-                <dd class="col-sm-9">$workflow.container</dd>
-                <dt class="col-sm-3">Container engine</dt>
-                <dd class="col-sm-9">$workflow.containerEngine</dd>
-                <dt class="col-sm-3">Command line</dt>
-                <dd class="col-sm-9">$workflow.commandLine</dd>
-            </dl>
-        </div>
-    </div>
-    <div class="container">
+        <h3>Workflow</h3>
+        <dl class="row small">
+            <dt class="col-sm-3">Repository</dt>
+            <dd class="col-sm-9">$workflow.repository</dd>
+            <dt class="col-sm-3">Revision</dt>
+            <dd class="col-sm-9">$workflow.revision</dd>
+            <dt class="col-sm-3">Launch dir</dt>
+            <dd class="col-sm-9">$workflow.launchDir</dd>
+            <dt class="col-sm-3">Work dir</dt>
+            <dd class="col-sm-9">$workflow.workDir</dd>
+            <dt class="col-sm-3">Config files</dt>
+            <dd class="col-sm-9">$workflow.configFiles</dd>
+            <dt class="col-sm-3">Container</dt>
+            <dd class="col-sm-9">$workflow.container</dd>
+            <dt class="col-sm-3">Container engine</dt>
+            <dd class="col-sm-9">$workflow.containerEngine</dd>
+            <dt class="col-sm-3">Command line</dt>
+            <dd class="col-sm-9">$workflow.commandLine</dd>
+        </dl>
+
         <h1 id="software" style="padding-top: 20px;">Software</h1>
         <dl class="row small">
             <dt class="col-sm-3">smoove</dt>
             <dd class="col-sm-9">https://github.com/brentp/smoove</dd>
             <dt class="col-sm-3">indexcov</dt>
             <dd class="col-sm-9">https://github.com/brentp/goleft/tree/master/indexcov</dd>
+            <dt class="col-sm-3">bpbio</dt>
+            <dd class="col-sm-9">https://github.com/brentp/bpbio</dd>
             <dt class="col-sm-3">bcftools</dt>
             <dd class="col-sm-9">https://samtools.github.io/bcftools/</dd>
             <dt class="col-sm-3">samtools</dt>
