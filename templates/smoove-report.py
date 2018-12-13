@@ -226,6 +226,206 @@ html = """
             var plot1 = Plotly.newPlot('plot_after', data, layout)
             </script>
         </div>
+
+        <h1>Variant Summary</h1>
+        <h3>Deletions</h3>
+        <div class="row">
+          <div id="deletions_p1" class="col-6"></div>
+          <div id="deletions_p2" class="col-6"></div>
+        </div>
+        <h3>Duplications</h3>
+        <div class="row">
+          <div id="duplications_p1" class="col-6"></div>
+          <div id="duplications_p2" class="col-6"></div>
+        </div>
+        <h3>Inversions</h3>
+        <div class="row">
+          <div id="inversions_p1" class="col-6"></div>
+          <div id="inversions_p2" class="col-6"></div>
+        </div>
+        <h3>Break ends</h3>
+        <div class="row">
+          <div id="bnd_p1" class="col-6"></div>
+          <div id="bnd_p2" class="col-6"></div>
+        </div>
+        <script>
+        var var_samples = [VARIANT_SAMPLE_LIST]
+        var variant_bar_layout = {
+            height: 350,
+            xaxis: {
+                title: "Sample",
+                showticklabels: false,
+                autorange: true
+            },
+            yaxis: {
+                title: "",
+                autorange: true
+            },
+            barmode: "stack",
+            hovermode: "closest",
+            legend: {
+                orientation: "h",
+                x: 0,
+                y: 0,
+            },
+            margin: {t: 10},
+        }
+        var variant_hist_layout = {
+            height: 350,
+            xaxis: {
+                title: "",
+                showticklabels: false,
+                autorange: true
+            },
+            yaxis: {
+                title: "Count of Variants",
+                autorange: true,
+                log: true,
+                type: "log"
+            },
+            hovermode: "closest",
+            margin: {t: 10},
+        }
+        var deletions_p1_data = [
+            {
+                x: var_samples,
+                y: [SMALL_DELETIONS],
+                text: var_samples,
+                hoverinfo: "text+x+y+name",
+                mode: "lines",
+                type: "bar",
+                name: "small deletions"
+            },{
+                x: var_samples,
+                y: [LARGE_DELETIONS],
+                mode: "lines",
+                type: "bar",
+                name: "large deletions"
+            }
+        ]
+        var deletions_p2_data = [
+            {
+                x: [DELETIONS_HIST],
+                cumulative: {enabled:false},
+                histfunc: "count",
+                histnorm:"",
+                mode: "lines",
+                type: "histogram",
+                marker: {color: "#7F7F7F"}
+            }
+        ]
+        variant_bar_layout.yaxis.title = "Deletions"
+        variant_hist_layout.xaxis.title = "# of Samples with Deletions"
+        Plotly.newPlot('deletions_p1', deletions_p1_data, variant_bar_layout)
+        Plotly.newPlot('deletions_p2', deletions_p2_data, variant_hist_layout)
+
+        var duplications_p1_data = [
+            {
+                x: var_samples,
+                y: [SMALL_DUPLICATIONS],
+                text: var_samples,
+                hoverinfo: "text+x+y+name",
+                mode: "lines",
+                type: "bar",
+                name: "small duplications"
+            },{
+                x: var_samples,
+                y: [LARGE_DUPLICATIONS],
+                mode: "lines",
+                type: "bar",
+                name: "large duplications"
+            }
+        ]
+        var duplications_p2_data = [
+            {
+                x: [DUPLICATIONS_HIST],
+                cumulative: {enabled:false},
+                histfunc: "count",
+                histnorm:"",
+                mode: "lines",
+                type: "histogram",
+                marker: {color: "#7F7F7F"}
+            }
+        ]
+        variant_bar_layout.yaxis.title = "Duplications"
+        variant_hist_layout.xaxis.title = "# of Samples with Duplications"
+        Plotly.newPlot('duplications_p1', duplications_p1_data, variant_bar_layout)
+        Plotly.newPlot('duplications_p2', duplications_p2_data, variant_hist_layout)
+
+        var inversions_p1_data = [
+            {
+                x: var_samples,
+                y: [SMALL_INVERSIONS],
+                text: var_samples,
+                hoverinfo: "text+x+y+name",
+                mode: "lines",
+                type: "bar",
+                name: "small inversions"
+            },{
+                x: var_samples,
+                y: [LARGE_INVERSIONS],
+                mode: "lines",
+                type: "bar",
+                name: "large inversions"
+            }
+        ]
+        var inversions_p2_data = [
+            {
+                x: [INVERSIONS_HIST],
+                cumulative: {enabled:false},
+                histfunc: "count",
+                histnorm:"",
+                mode: "lines",
+                type: "histogram",
+                marker: {color: "#7F7F7F"}
+            }
+        ]
+        variant_bar_layout.yaxis.title = "Inversions"
+        variant_hist_layout.xaxis.title = "# of Samples with Inversions"
+        Plotly.newPlot('inversions_p1', inversions_p1_data, variant_bar_layout)
+        Plotly.newPlot('inversions_p2', inversions_p2_data, variant_hist_layout)
+
+        var bnd_p1_data = [
+            {
+                x: var_samples,
+                y: [SMALL_BNDS],
+                mode: "lines",
+                type: "bar",
+                name: "small BNDs",
+                text: var_samples
+            },{
+                x: var_samples,
+                y: [LARGE_BNDS],
+                mode: "lines",
+                type: "bar",
+                name: "large BNDs",
+                text: var_samples
+            },{
+                x: var_samples,
+                y: [INTERCHROMOSOMAL_BNDS],
+                mode: "lines",
+                type: "bar",
+                name: "interchromosomal BNDs",
+                text: var_samples
+            }
+        ]
+        var bnd_p2_data = [
+            {
+                x: [BNDS_HIST],
+                cumulative: {enabled:false},
+                histfunc: "count",
+                histnorm:"",
+                mode: "lines",
+                type: "histogram",
+                marker: {color: "#7F7F7F"}
+            }
+        ]
+        variant_bar_layout.yaxis.title = "Break Ends"
+        variant_hist_layout.xaxis.title = "# of Samples with Break Ends"
+        Plotly.newPlot('bnd_p1', bnd_p1_data, variant_bar_layout)
+        Plotly.newPlot('bnd_p2', bnd_p2_data, variant_hist_layout)
+        </script>
+
     </div>
     <div class="jumbotron mb-0 pt-3 pb-3">
         <div class="container">
@@ -455,6 +655,7 @@ html = html.replace("[PCA_DIV]", pca_div)
 index_cov_output = "$outdir/indexcov/index.html".replace("s3://", "https://s3.amazonaws.com/")
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
 
+# build the chromosome coverage plots
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
 with open("$rocfile") as fh:
     reader = csv.DictReader(fh, delimiter="\\t")
@@ -486,6 +687,46 @@ for chrom in allowable:
 cov_data += "}"
 html = html.replace("[CHROM_BUTTONS]", buttons)
 html = html.replace("[CHROM_DATA]", cov_data)
+
+# build the variant summary plots
+var_samples = []
+plot_position = 0
+histograms = {1: "deletions", 3: "duplications", 5: "inversions", 7: "bnds"}
+plot_data = defaultdict(list)
+with open("$variant_html") as fh:
+    for line in fh:
+        line = line.strip()
+        if line.startswith("var pdata"):
+            false = False
+            true = True
+            data = eval(line.partition("=")[-1].strip(" ;"))
+            # bar
+            if len(data) > 1:
+                for trace in data:
+                    if not var_samples:
+                        var_samples = [i.replace("sample:", "") for i in trace["x"]]
+                    plot_data[trace["name"]] = trace["y"]
+            # hist
+            else:
+                plot_data[histograms[plot_position]] = data[0]["x"]
+            plot_position += 1
+html = html.replace("VARIANT_SAMPLE_LIST", ",".join(['"{sample}"'.format(i) for i in var_samples]))
+html = html.replace("SMALL_DELETIONS", ",".join(plot_data["small deletions"]))
+html = html.replace("LARGE_DELETIONS", ",".join(plot_data["large deletions"]))
+html = html.replace("DELETIONS_HIST", ",".join(plot_data["deletions"]))
+html = html.replace("SMALL_DUPLICATIONS", ",".join(plot_data["small duplications"]))
+html = html.replace("LARGE_DUPLICATIONS", ",".join(plot_data["large duplications"]))
+html = html.replace("DUPLICATIONS_HIST", ",".join(plot_data["duplications"]))
+html = html.replace("SMALL_INVERSIONS", ",".join(plot_data["small inversion"]))
+html = html.replace("LARGE_INVERSIONS", ",".join(plot_data["large inversion"]))
+html = html.replace("INVERSIONS_HIST", ",".join(plot_data["inversions"]))
+html = html.replace("SMALL_BNDS", ",".join(plot_data["small BNDs"]))
+html = html.replace("LARGE_BNDS", ",".join(plot_data["large BNDs"]))
+try:
+    html = html.replace("INTERCHROMOSOMAL_BNDS", ",".join(plot_data["interchromosomal BNDs"]))
+except KeyError:
+    pass
+html = html.replace("BNDS_HIST", ",".join(plot_data["bnds"]))
 
 with open("smoove-nf.html", "w") as fh:
     print(html, file=fh)

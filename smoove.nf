@@ -134,6 +134,7 @@ process smoove_square {
     output:
     file("${project}.smoove.square.anno.vcf.gz") into square_vcf
     file("${project}.smoove.square.anno.vcf.gz.csi") into square_idx
+    file("svvcf.html") into svvcf
 
     script:
     """
@@ -141,6 +142,7 @@ process smoove_square {
 
     smoove annotate --gff $gff ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
+    bpbio plot-sv-vcf ${project}.smoove.square.anno.vcf.gz
     """
 }
 
@@ -178,6 +180,7 @@ process build_report {
     file vcf from square_vcf
     file pedfile from ped
     file rocfile from roc
+    file variant_html from svvcf
 
     output:
     file("smoove-nf.html")
