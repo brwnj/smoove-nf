@@ -155,8 +155,8 @@ process run_indexcov {
     file("${project}*.png")
     file("${project}*.html")
     file("${project}*.bed.gz")
-    file("${project}*.ped") into peds
-    file("${project}*.roc")
+    file("${project}*.ped") into ped
+    file("${project}*.roc") into roc
 
     script:
     excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
@@ -169,13 +169,15 @@ process run_indexcov {
 }
 
 process build_report {
-    publishDir path: "$outdir", mode: "copy"
+    publishDir path: "$outdir", mode: "copy", overwrite: true
+    cache false
 
     input:
     file sequence_count from sequence_counts.collect()
     file variant_count from variant_counts.collect()
     file vcf from square_vcf
-    file ped from peds
+    file pedfile from ped
+    file rocfile from roc
 
     output:
     file("smoove-nf.html")
