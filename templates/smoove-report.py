@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import csv
+import gzip
 import os
 
 from collections import defaultdict
@@ -19,19 +20,20 @@ html = """
     <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
     <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-md sticky-top navbar-dark bg-dark">
         <a class="navbar-brand" href="#">smoove-nf report</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link" href="#">Configuration</a></li>
                 <li class="nav-item"><a class="nav-link" href="#summary">Summary</a></li>
                 <li class="nav-item"><a class="nav-link" href="#filtering">Filtering</a></li>
+                <li class="nav-item"><a class="nav-link" href="#configuration">Configuration</a></li>
                 <li class="nav-item"><a class="nav-link" href="#software">Software</a></li>
             </ul>
             <span class="navbar-text">
@@ -40,53 +42,12 @@ html = """
         </div>
     </nav>
 
-    <div class="jumbotron mb-0 pt-3 pb-3">
-        <div class="container">
-            <h1 id="configuration" style="padding-top: 20px;">Configuration</h1>
-            <h3>Parameters</h3>
-            <dl class="row small">
-                <dt class="col-sm-3"><code>--bams</code></dt>
-                <dd class="col-sm-9">${params.bams}</dd>
-                <dt class="col-sm-3"><code>--outdir</code></dt>
-                <dd class="col-sm-9">${params.outdir}</dd>
-                <dt class="col-sm-3"><code>--fasta</code></dt>
-                <dd class="col-sm-9">${params.fasta}</dd>
-                <dt class="col-sm-3"><code>--bed</code></dt>
-                <dd class="col-sm-9">${params.bed}</dd>
-                <dt class="col-sm-3"><code>--excludechroms</code></dt>
-                <dd class="col-sm-9">${params.excludechroms}</dd>
-                <dt class="col-sm-3"><code>--project</code></dt>
-                <dd class="col-sm-9">${params.project}</dd>
-                <dt class="col-sm-3"><code>--gff</code></dt>
-                <dd class="col-sm-9">${params.gff}</dd>
-            </dl>
-
-            <h3>Workflow</h3>
-            <dl class="row small">
-                <dt class="col-sm-3">Repository</dt>
-                <dd class="col-sm-9">$workflow.repository</dd>
-                <dt class="col-sm-3">Revision</dt>
-                <dd class="col-sm-9">$workflow.revision</dd>
-                <dt class="col-sm-3">Launch dir</dt>
-                <dd class="col-sm-9">$workflow.launchDir</dd>
-                <dt class="col-sm-3">Work dir</dt>
-                <dd class="col-sm-9">$workflow.workDir</dd>
-                <dt class="col-sm-3">Config files</dt>
-                <dd class="col-sm-9">$workflow.configFiles</dd>
-                <dt class="col-sm-3">Container</dt>
-                <dd class="col-sm-9">$workflow.container</dd>
-                <dt class="col-sm-3">Container engine</dt>
-                <dd class="col-sm-9">$workflow.containerEngine</dd>
-                <dt class="col-sm-3">Command line</dt>
-                <dd class="col-sm-9">$workflow.commandLine</dd>
-            </dl>
-        </div>
-    </div>
-
     <div class="container pb-20">
         <h1 id="summary" style="padding-top: 20px;">Sample Summary</h1>
         <table id="sample_table" class="table table-striped" width="100%"></table>
         <script>
+        var success = '<span class="badge badge-success">Success</span>'
+        var fail = '<span class="badge badge-danger">Fail</span>'
         var dataSet = [SAMPLE_SUMMARY];
 
         \$(document).ready(function() {
@@ -94,8 +55,8 @@ html = """
                 data: dataSet,
                 columns: [
                     { title: "Sample" },
-                    { title: "Reads" },
-                    { title: "Called Variants" },
+                    { title: "Reads", render: \$.fn.dataTable.render.number(",")},
+                    { title: "Called Variants", render: \$.fn.dataTable.render.number(",") },
                     { title: "Called" },
                     { title: "Genotyped" },
                 ]
@@ -179,58 +140,41 @@ html = """
             </script>
         </div>
 
-        <p><a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-pca.md">Principal component analysis</a> to highlight potential major batch effects:</p>
-        <div class="row">
-            <div id="pca1_2" class="col-6"></div>
-            <div id="pca1_3" class="col-6"></div>
-            <script>
-            layout.title = "PCA: 1 vs 2"
-            layout.xaxis.title = "PC1"
-            layout.yaxis.title = "PC2"
-            pca_x_series = [PCA_x1]
-            data = [{
-                x: pca_x_series,
-                y: [PCA_y1],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Bins',
-                text: samples,
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(31,120,180,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            var plot1 = Plotly.newPlot('pca1_2', data, layout)
+        [PCA_DIV]
 
-            layout.title = "PCA: 1 vs 3"
-            layout.xaxis.title = "PC1"
-            layout.yaxis.title = "PC3"
-            data = [{
-                x: pca_x_series,
-                y: [PCA_y2],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Bins',
-                text: samples,
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(31,120,180,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            var plot1 = Plotly.newPlot('pca1_3', data, layout)
+        <h3>Genome Coverage</h3>
+        <p>Lower coverage samples have shorter curves where the proportion of regions covered drops off more quickly. This indicates a higher fraction of low coverage regions.</p>
+        <div class="container" id="cov_plot"></div>
+            <div class="container pb-5">
+            <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center" data-toggle="buttons">
+                  [CHROM_BUTTONS]
+            </div>
+
+            <script>
+            var cov_color = 'rgba(128,128,128,0.3)'
+            var cov_layout = {
+                title: "",
+                margin: {t: 55},
+                height: 450,
+                xaxis: {title: "Scaled Coverage", showgrid: false, range: [0, 1.5]},
+                yaxis: {title: "Proportion of Regions Covered", range: [0, 1.]},
+                hovermode: "closest",
+                showlegend: false,
+            }
+            var cov_data = [CHROM_DATA]
+            var cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
+            cov_layout.title = "Chromosome " + \$('#chrom_selector input:radio:checked').data('name')
+            Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+
+            jQuery('#chrom_selector').on("change", function() {
+                cov_layout.title = "Chromosome " + \$('#chrom_selector input:radio:checked').data('name')
+                cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
+                Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+            })
             </script>
         </div>
-        <h3>indexcov Results</h3>
+
+        <h3>Full indexcov Results</h3>
         <p>INDEXCOV_RESULT</p>
 
         <h1 id="filtering" style="padding-top: 20px;">Read Filtering</h1>
@@ -282,7 +226,50 @@ html = """
             var plot1 = Plotly.newPlot('plot_after', data, layout)
             </script>
         </div>
+    </div>
+    <div class="jumbotron mb-0 pt-3 pb-3">
+        <div class="container">
+            <h1 id="configuration" style="padding-top: 20px;">Configuration</h1>
+            <h3>Parameters</h3>
+            <dl class="row small">
+                <dt class="col-sm-3"><code>--bams</code></dt>
+                <dd class="col-sm-9">${params.bams}</dd>
+                <dt class="col-sm-3"><code>--outdir</code></dt>
+                <dd class="col-sm-9">${params.outdir}</dd>
+                <dt class="col-sm-3"><code>--fasta</code></dt>
+                <dd class="col-sm-9">${params.fasta}</dd>
+                <dt class="col-sm-3"><code>--bed</code></dt>
+                <dd class="col-sm-9">${params.bed}</dd>
+                <dt class="col-sm-3"><code>--excludechroms</code></dt>
+                <dd class="col-sm-9">${params.excludechroms}</dd>
+                <dt class="col-sm-3"><code>--project</code></dt>
+                <dd class="col-sm-9">${params.project}</dd>
+                <dt class="col-sm-3"><code>--gff</code></dt>
+                <dd class="col-sm-9">${params.gff}</dd>
+            </dl>
 
+            <h3>Workflow</h3>
+            <dl class="row small">
+                <dt class="col-sm-3">Repository</dt>
+                <dd class="col-sm-9">$workflow.repository</dd>
+                <dt class="col-sm-3">Revision</dt>
+                <dd class="col-sm-9">$workflow.revision</dd>
+                <dt class="col-sm-3">Launch dir</dt>
+                <dd class="col-sm-9">$workflow.launchDir</dd>
+                <dt class="col-sm-3">Work dir</dt>
+                <dd class="col-sm-9">$workflow.workDir</dd>
+                <dt class="col-sm-3">Config files</dt>
+                <dd class="col-sm-9">$workflow.configFiles</dd>
+                <dt class="col-sm-3">Container</dt>
+                <dd class="col-sm-9">$workflow.container</dd>
+                <dt class="col-sm-3">Container engine</dt>
+                <dd class="col-sm-9">$workflow.containerEngine</dd>
+                <dt class="col-sm-3">Command line</dt>
+                <dd class="col-sm-9">$workflow.commandLine</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="container">
         <h1 id="software" style="padding-top: 20px;">Software</h1>
         <dl class="row small">
             <dt class="col-sm-3">smoove</dt>
@@ -306,6 +293,60 @@ html = """
 </html>
 """
 
+pca_div = """
+        <p><a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-pca.md">Principal component analysis</a> to highlight potential major batch effects:</p>
+        <div class="row">
+            <div id="pca1_2" class="col-6"></div>
+            <div id="pca1_3" class="col-6"></div>
+            <script>
+            layout.title = "PCA: 1 vs 2"
+            layout.xaxis.title = "PC1"
+            layout.yaxis.title = "PC2"
+            pca_x_series = [PCA_x1]
+            data = [{
+                x: pca_x_series,
+                y: [PCA_y1],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Bins',
+                text: samples,
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(31,120,180,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            var plot2 = Plotly.newPlot('pca1_2', data, layout)
+
+            layout.title = "PCA: 1 vs 3"
+            layout.xaxis.title = "PC1"
+            layout.yaxis.title = "PC3"
+            data = [{
+                x: pca_x_series,
+                y: [PCA_y2],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Bins',
+                text: samples,
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(31,120,180,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            var plot3 = Plotly.newPlot('pca1_3', data, layout)
+            </script>
+        </div>
+"""
+
 # building the sample summary table
 ## parse counts
 sample_counts = defaultdict(dict)
@@ -318,11 +359,9 @@ for count_file in "$sequence_count".split(" "):
                 sample_counts[sample]["mapped"] = count
                 sample_counts[sample]["variants"] = -1
                 # initialize the status messages
-                sample_counts[sample]["called"] = '<span class="badge badge-danger">Fail</span>'
-                sample_counts[sample]["genotyped"] = '<span class="badge badge-danger">Fail</span>'
+                sample_counts[sample]["called"] = "fail"
+                sample_counts[sample]["genotyped"] = "fail"
                 break
-# could use later for validation, ordering in js
-sample_list = sorted(sample_counts.keys())
 ## parse called
 for count_file in "$variant_count".split(" "):
     sample = os.path.basename(count_file).partition("-stats")[0]
@@ -331,31 +370,46 @@ for count_file in "$variant_count".split(" "):
             if line.startswith("#"):
                 continue
             if "number of records" in line:
-                count = int(line.split("\t")[-1])
+                count = int(line.split("\\t")[-1])
                 sample_counts[sample]["variants"] = count
-                sample_counts[sample]["called"] = '<span class="badge badge-success">Success</span>'
+                sample_counts[sample]["called"] = "success"
                 break
 ## parse genotyped from annotated vcf
-with open("$vcf") as fh:
+filtering_counts = defaultdict(list)
+with gzip.open("$vcf", "rt") as fh:
     for line in fh:
         if not line.startswith("##"):
             break
         if line.startswith("##SAMPLE"):
-            ##SAMPLE=<ID=1014>
-            toks = line.split("=")
-            sample = toks[-1].strip(">")
-            sample_counts[sample]["genotyped"] = '<span class="badge badge-success">Success</span>'
-
+            sample = line.strip().partition("ID=")[-1].strip(">")
+            sample_counts[sample]["genotyped"] = "success"
+        # building the read filtering plots
+        elif line.startswith("##smoove_count_stats"):
+            stats = line.strip().partition("=")[-1]
+            sample = stats.partition(":")[0]
+            split_before, disc_before, split_after, disc_after = stats.partition(":")[-1].split(",")
+            filtering_counts["samples"].append(sample)
+            filtering_counts["split_before"].append(split_before)
+            filtering_counts["disc_before"].append(disc_before)
+            filtering_counts["split_after"].append(split_after)
+            filtering_counts["disc_after"].append(disc_after)
+sample_list = sorted(sample_counts.keys())
 sample_summary_str = ""
 for sample in sample_list:
     counts = sample_counts[sample]
-    sample_summary_str += "['{sample}', {mapped}, {variants}, '{called}', '{genotyped}'],".format(sample=sample, mapped=counts["mapped"], variants=counts["variants"], called=counts["called"], genotyped=counts["genotyped"])
+    sample_summary_str += "['{sample}', {mapped}, {variants}, {called}, {genotyped}],".format(sample=sample, mapped=counts["mapped"], variants=counts["variants"], called=counts["called"], genotyped=counts["genotyped"])
 html = html.replace("SAMPLE_SUMMARY", sample_summary_str)
+html = html.replace("FILTERED_SAMPLES", ",".join(["'{sample}'".format(sample=i) for i in filtering_counts["samples"]]))
+html = html.replace("SPLIT_BEFORE", ",".join(filtering_counts["split_before"]))
+html = html.replace("SPLIT_AFTER", ",".join(filtering_counts["split_after"]))
+html = html.replace("DISCORDANT_BEFORE", ",".join(filtering_counts["disc_before"]))
+html = html.replace("DISCORDANT_AFTER", ",".join(filtering_counts["disc_after"]))
 
 # building sequence summary plots
 ped_data = defaultdict(list)
-with open("$ped") as fh:
-    reader = csv.DictReader(fh, delimiter="\t")
+pca = True
+with open("$pedfile") as fh:
+    reader = csv.DictReader(fh, delimiter="\\t")
     for row in reader:
         # inferred sex
         if row["sex"] == "1":
@@ -369,12 +423,16 @@ with open("$ped") as fh:
         # bin plot
         total = float(row["bins.in"]) + float(row["bins.out"])
         ped_data["samples"].append(row["sample_id"])
-        ped_data["bin_x"].append(float(row["bins.lo"]) / total)
-        ped_data["bin_y"].append(float(row["bins.out"]) / total)
+        ped_data["bin_x"].append("%f" % (float(row["bins.lo"]) / total))
+        ped_data["bin_y"].append("%f" % (float(row["bins.out"]) / total))
         # PCAs
-        ped_data["pca_1"].append(row["PC1"])
-        ped_data["pca_2"].append(row["PC2"])
-        ped_data["pca_3"].append(row["PC3"])
+        try:
+            ped_data["pca_1"].append(row["PC1"])
+            ped_data["pca_2"].append(row["PC2"])
+            ped_data["pca_3"].append(row["PC3"])
+        except KeyError:
+            pca = False
+            pass
 html = html.replace("SAMPLE_LIST", ",".join(["'{sample}'".format(sample=i) for i in ped_data["samples"]]))
 html = html.replace("INFERRED_X1", ",".join(ped_data["inferred_x1"]))
 html = html.replace("INFERRED_Y1", ",".join(ped_data["inferred_y1"]))
@@ -384,34 +442,50 @@ html = html.replace("INFERRED_Y2", ",".join(ped_data["inferred_y2"]))
 html = html.replace("INFERRED_SAMPLES2", ",".join(["'{sample}'".format(sample=i) for i in ped_data["inferred_samples2"]]))
 html = html.replace("BIN_X", ",".join(ped_data["bin_x"]))
 html = html.replace("BIN_Y", ",".join(ped_data["bin_y"]))
-html = html.replace("PCA_x1", ",".join(ped_data["pca_1"]))
-html = html.replace("PCA_y1", ",".join(ped_data["pca_2"]))
-html = html.replace("PCA_y2", ",".join(ped_data["pca_3"]))
+
+if pca:
+    pca_div = pca_div.replace("PCA_x1", ",".join(ped_data["pca_1"]))
+    pca_div = pca_div.replace("PCA_y1", ",".join(ped_data["pca_2"]))
+    pca_div = pca_div.replace("PCA_y2", ",".join(ped_data["pca_3"]))
+else:
+    pca_div = ""
+html = html.replace("[PCA_DIV]", pca_div)
 
 # fixing the file link to indexcov results
 index_cov_output = "$outdir/indexcov/index.html".replace("s3://", "https://s3.amazonaws.com/")
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
 
-# building the read filtering plots
-filtering_counts = defaultdict(list)
-with open("$variant_count") as fh:
-    for line in fh:
-        if not line.startswith("##"):
-            break
-        if line.startswith("##smoove_count_stats"):
-            stats = line.strip().partition("=")[-1]
-            sample = stats.partition(":")[0]
-            split_before, disc_before, split_after, disc_after = stats.partition(":")[-1].split(",")
-            filtering_counts["samples"].append(sample)
-            filtering_counts["split_before"].append(split_before)
-            filtering_counts["disc_before"].append(disc_before)
-            filtering_counts["split_after"].append(split_after)
-            filtering_counts["disc_after"].append(disc_after)
-html = html.replace("FILTERED_SAMPLES", ",".join(["'{sample}'".format(sample=i) for i in filtering_counts["samples"]]))
-html = html.replace("SPLIT_BEFORE", ",".join(filtering_counts["split_before"]))
-html = html.replace("SPLIT_AFTER", ",".join(filtering_counts["split_after"]))
-html = html.replace("DISCORDANT_BEFORE", ",".join(filtering_counts["disc_before"]))
-html = html.replace("DISCORDANT_AFTER", ",".join(filtering_counts["disc_after"]))
+allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
+with open("$rocfile") as fh:
+    reader = csv.DictReader(fh, delimiter="\\t")
+    data = defaultdict(lambda: defaultdict(list))
+    for row in reader:
+        # header row is repeated at chromosome breaks
+        if row["#chrom"] == "#chrom":
+            continue
+        chrom = row["#chrom"].strip("chr")
+        if chrom not in allowable:
+            continue
+        data[chrom]["x"].append(row["cov"])
+        for sample in sample_list:
+            # KeyError here would be interesting
+            data[chrom][sample].append(row[sample])
+buttons = ""
+cov_data = "{"
+for chrom in allowable:
+    if chrom in data:
+        if not buttons:
+            buttons += '<label class="btn btn-secondary active"><input type="radio" name="options" data-name="{chrom}" autocomplete="off" checked> {chrom} </label>'.format(chrom=chrom)
+        else:
+            buttons += '<label class="btn btn-secondary"><input type="radio" name="options" data-name="{chrom}" autocomplete="off"> {chrom} </label>'.format(chrom=chrom)
+        trace_data = "["
+        for sample in sample_list:
+            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text',mode:'lines',text:'{sample}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample)
+        trace_data += "]"
+    cov_data += "'{chrom}': {trace},".format(chrom=chrom, trace=trace_data)
+cov_data += "}"
+html = html.replace("[CHROM_BUTTONS]", buttons)
+html = html.replace("[CHROM_DATA]", cov_data)
 
 with open("smoove-nf.html", "w") as fh:
     print(html, file=fh)
