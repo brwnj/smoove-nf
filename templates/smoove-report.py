@@ -22,32 +22,45 @@ html = """
     <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style type="text/css">
+    .container {max-width: 90%}
+    h1:before {
+        height: 70px;
+        content: "";
+        display:block;
+    }
+    body {
+        position: relative;
+    }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-md sticky-top navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">smoove-nf report</a>
+    <nav id="main_nav" class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <span class="navbar-brand mb-0 h1">smoove-nf report</span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+          <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link" href="#summary">Summary</a></li>
+          <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="#processing">Processing</a></li>
+                <li class="nav-item"><a class="nav-link" href="#coverage">Coverage</a></li>
                 <li class="nav-item"><a class="nav-link" href="#filtering">Filtering</a></li>
+                <li class="nav-item"><a class="nav-link" href="#variants">Variants</a></li>
                 <li class="nav-item"><a class="nav-link" href="#configuration">Configuration</a></li>
-                <li class="nav-item"><a class="nav-link" href="#software">Software</a></li>
             </ul>
-            <span class="navbar-text">
-                [<a href="https://github.com/brwnj/smoove-nf" target="_blank">code</a>, <a href="https://github.com/brwnj/smoove-nf/issues" target="_blank">issues</a>]
-            </span>
         </div>
     </nav>
 
-    <div class="container pb-20">
-        <h1 id="summary" style="padding-top: 20px;">Sample Summary</h1>
+    <div data-spy="scroll" data-target="#main_nav" data-offset="70" class="container pb-20">
+        <h1 id="processing">Sample Processing</h1>
         <table id="sample_table" class="table table-striped" width="100%"></table>
         <br>
-        <p>Samples that fail to be called with <code>smoove call</code> tend to have a high number of variants and exceed RAM allocations. Failed samples are not included in the merged VCF (<code>smoove merge</code>), but are genotyped with <code>smoove genotype</code> and included in the annotated VCF.</p>
+        <p>Read and variant counts are obtained as samples are processed by <a href="https://github.com/arq5x/lumpy-sv">LUMPY</a>
+           via <a href="https://github.com/brentp/smoove">smoove</a>. Samples where variants fail to be called tend
+           to have a higher number of variants suggesting issues with the sample. Failed samples are not included
+           in the merged VCF, but are genotyped and included in the annotated VCF.</p>
         <script>
+        \$('body').scrollspy({ target: '#main_nav' })
         var success = '<span class="badge badge-success">Success</span>'
         var fail = '<span class="badge badge-danger">Fail</span>'
         var dataSet = [SAMPLE_SUMMARY];
@@ -66,9 +79,11 @@ html = """
         } );
         </script>
 
-        <h1 id="sequence_summary" style="padding-top: 20px;">Sequence Summary</h1>
-        <p><a href="https://github.com/brentp/goleft/tree/master/indexcov">indexcov</a> is used to do a basic QC of the data, screen for sex chromosome anomalies, analyze coverage across samples, and highlight any obvious deletions or duplications.</p>
-        <p><a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-sex.md">Inferred sex</a> and <a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-bin.md">bin depth</a> analysis plots:</p>
+        <h1 id="coverage">Sequence Coverage</h1>
+        <div class="row pb-5">
+            <div class="col-6">By scaling coverage to a median of 1, <a href="https://github.com/brentp/goleft/tree/master/indexcov">indexcov</a> infers sex based on X and Y copy-number states. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-sex.md">docs</a>]</div>
+            <div class="col-6">Ideally, sample depth per bin is near 1, indicating uniform coverage. Samples with a high number of low coverage bins fall to the right of the plot and samples towards the top of the plot have many regions outside of the expected coverage. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-bin.md">docs</a>]</div>
+        </div>
         <div class="row">
             <div id="inferred_sex" class="col-6"></div>
             <div id="bin_counts" class="col-6"></div>
@@ -145,7 +160,7 @@ html = """
         [PCA_DIV]
 
         <h3>Genome Coverage</h3>
-        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions.</p>
+        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-depth.md">docs</a>]</p>
         <div class="container" id="cov_plot"></div>
             <div class="container pb-5">
             <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center" data-toggle="buttons">
@@ -179,7 +194,7 @@ html = """
         <h3>Full indexcov Results</h3>
         <p>INDEXCOV_RESULT</p>
 
-        <h1 id="filtering" style="padding-top: 20px;">Read Filtering</h1>
+        <h1 id="filtering">Alignment Filtering</h1>
         <p>Split and discordant read filtering results as reported by <code>smoove call</code>.</p>
 
         <div class="row">
@@ -229,7 +244,7 @@ html = """
             </script>
         </div>
 
-        <h1>Variant Summary</h1>
+        <h1 id="variants">Variant Summary</h1>
         <h3>Deletions</h3>
         <div class="row">
           <div id="deletions_p1" class="col-6"></div>
@@ -428,7 +443,7 @@ html = """
         Plotly.newPlot('bnd_p2', bnd_p2_data, variant_hist_layout)
         </script>
 
-        <h1 id="configuration" style="padding-top: 20px;">Configuration</h1>
+        <h1 id="configuration">Configuration</h1>
         <h3>Parameters</h3>
         <dl class="row small">
             <dt class="col-sm-3"><code>--bams</code></dt>
@@ -467,7 +482,7 @@ html = """
             <dd class="col-sm-9">$workflow.commandLine</dd>
         </dl>
 
-        <h1 id="software" style="padding-top: 20px;">Software</h1>
+        <h1 id="software">Software</h1>
         <dl class="row small">
             <dt class="col-sm-3">smoove</dt>
             <dd class="col-sm-9">https://github.com/brentp/smoove</dd>
@@ -483,7 +498,7 @@ html = """
             <dd class="col-sm-9">https://www.nextflow.io/</dd>
         </dl>
     </div>
-    <footer class="footer" style="padding-top: 20px;padding-bottom: 20px;">
+    <footer class="footer">
         <div class="container">
             <p class="text-muted text-right">Generated by <a href="https://github.com/brwnj/smoove-nf">smoove-nf</a>.</p>
         </div>
@@ -493,7 +508,7 @@ html = """
 """
 
 pca_div = """
-        <p><a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-pca.md">Principal component analysis</a> to highlight potential major batch effects:</p>
+        <p>PCA is used to summarize samples by their non-sex chromosome bins. Groups of samples may indicate major batch effects in the underlying data. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-pca.md">docs</a>]</p>
         <div class="row">
             <div id="pca1_2" class="col-6"></div>
             <div id="pca1_3" class="col-6"></div>
