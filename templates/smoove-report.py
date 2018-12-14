@@ -163,7 +163,7 @@ html = """
         <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-depth.md">docs</a>]</p>
         <div class="container" id="cov_plot"></div>
             <div class="container pb-5">
-            <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center" data-toggle="buttons">
+            <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center flex-wrap" data-toggle="buttons">
                   [CHROM_BUTTONS]
             </div>
 
