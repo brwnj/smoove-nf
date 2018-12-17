@@ -163,7 +163,7 @@ process run_indexcov {
     script:
     excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
     """
-    curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.0/goleft_linux64' > goleft
+    curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.1/goleft_linux64' > goleft
     chmod +x goleft
     ./goleft indexcov $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
