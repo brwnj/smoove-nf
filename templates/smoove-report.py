@@ -561,10 +561,17 @@ pca_div = """
         </div>
 """
 
+sequence_count_files = "$sequence_count".split(" ")
+variant_count_files = "$variant_count".split(" ")
+square_vcf_file = "$vcf"
+ped_file = "$pedfile"
+indexcov_roc_file = "$rocfile"
+svvcf_html_file = "$variant_html"
+
 # building the sample summary table
 ## parse counts
 sample_counts = defaultdict(dict)
-for count_file in "$sequence_count".split(" "):
+for count_file in sequence_count_files:
     sample = os.path.basename(count_file).partition("-flagstat")[0]
     with open(count_file) as fh:
         for line in fh:
@@ -577,7 +584,7 @@ for count_file in "$sequence_count".split(" "):
                 sample_counts[sample]["genotyped"] = "fail"
                 break
 ## parse called
-for count_file in "$variant_count".split(" "):
+for count_file in variant_count_files:
     sample = os.path.basename(count_file).partition("-stats")[0]
     with open(count_file) as fh:
         for line in fh:
@@ -590,7 +597,7 @@ for count_file in "$variant_count".split(" "):
                 break
 ## parse genotyped from annotated vcf
 filtering_counts = defaultdict(list)
-with gzip.open("$vcf", "rt") as fh:
+with gzip.open(square_vcf_file, "rt") as fh:
     for line in fh:
         if not line.startswith("##"):
             break
@@ -622,7 +629,7 @@ html = html.replace("DISCORDANT_AFTER", ",".join(filtering_counts["disc_after"])
 # building sequence summary plots
 ped_data = defaultdict(list)
 pca = True
-with open("$pedfile") as fh:
+with open(ped_file) as fh:
     reader = csv.DictReader(fh, delimiter="\\t")
     for row in reader:
         # inferred sex
@@ -671,7 +678,7 @@ html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path
 
 # build the chromosome coverage plots
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
-with open("$rocfile") as fh:
+with open(indexcov_roc_file) as fh:
     reader = csv.DictReader(fh, delimiter="\\t")
     data = defaultdict(lambda: defaultdict(list))
     for row in reader:
@@ -707,7 +714,7 @@ var_samples = []
 plot_position = 0
 histograms = {1: "deletions", 3: "duplications", 5: "inversions", 7: "bnds"}
 plot_data = defaultdict(list)
-with open("$variant_html") as fh:
+with open(svvcf_html_file) as fh:
     for line in fh:
         line = line.strip()
         if line.startswith("var pdata"):
