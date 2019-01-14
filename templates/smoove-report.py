@@ -88,7 +88,7 @@ html = """
             <div id="inferred_sex" class="col-6"></div>
             <div id="bin_counts" class="col-6"></div>
             <script>
-            var samples = [SAMPLE_LIST];
+            var samples = [COVERAGE_SAMPLE_LIST];
             var data1 = [{
                 x: [INFERRED_X1],
                 y: [INFERRED_Y1],
@@ -654,7 +654,7 @@ with open(ped_file) as fh:
         except KeyError:
             pca = False
             pass
-html = html.replace("SAMPLE_LIST", ",".join(["'{sample}'".format(sample=i) for i in ped_data["samples"]]))
+html = html.replace("COVERAGE_SAMPLE_LIST", ",".join(["'{sample}'".format(sample=i) for i in ped_data["samples"]]))
 html = html.replace("INFERRED_X1", ",".join(ped_data["inferred_x1"]))
 html = html.replace("INFERRED_Y1", ",".join(ped_data["inferred_y1"]))
 html = html.replace("INFERRED_SAMPLES1", ",".join(["'{sample}'".format(sample=i) for i in ped_data["inferred_samples1"]]))
@@ -731,23 +731,23 @@ with open(svvcf_html_file) as fh:
             else:
                 plot_data[histograms[plot_position]] = data[0]["x"]
             plot_position += 1
-html = html.replace("VARIANT_SAMPLE_LIST", ",".join(['"{sample}"'.format(i) for i in var_samples]))
-html = html.replace("SMALL_DELETIONS", ",".join(plot_data["small deletions"]))
-html = html.replace("LARGE_DELETIONS", ",".join(plot_data["large deletions"]))
-html = html.replace("DELETIONS_HIST", ",".join(plot_data["deletions"]))
-html = html.replace("SMALL_DUPLICATIONS", ",".join(plot_data["small duplications"]))
-html = html.replace("LARGE_DUPLICATIONS", ",".join(plot_data["large duplications"]))
-html = html.replace("DUPLICATIONS_HIST", ",".join(plot_data["duplications"]))
-html = html.replace("SMALL_INVERSIONS", ",".join(plot_data["small inversion"]))
-html = html.replace("LARGE_INVERSIONS", ",".join(plot_data["large inversion"]))
-html = html.replace("INVERSIONS_HIST", ",".join(plot_data["inversions"]))
-html = html.replace("SMALL_BNDS", ",".join(plot_data["small BNDs"]))
-html = html.replace("LARGE_BNDS", ",".join(plot_data["large BNDs"]))
+html = html.replace("VARIANT_SAMPLE_LIST", ",".join(['"{}"'.format(i) for i in var_samples]))
+html = html.replace("SMALL_DELETIONS", ",".join(map(str, plot_data["small deletions"])))
+html = html.replace("LARGE_DELETIONS", ",".join(map(str, plot_data["large deletions"])))
+html = html.replace("DELETIONS_HIST", ",".join(map(str, plot_data["deletions"])))
+html = html.replace("SMALL_DUPLICATIONS", ",".join(map(str, plot_data["small duplications"])))
+html = html.replace("LARGE_DUPLICATIONS", ",".join(map(str, plot_data["large duplications"])))
+html = html.replace("DUPLICATIONS_HIST", ",".join(map(str, plot_data["duplications"])))
+html = html.replace("SMALL_INVERSIONS", ",".join(map(str, plot_data["small inversion"])))
+html = html.replace("LARGE_INVERSIONS", ",".join(map(str, plot_data["large inversion"])))
+html = html.replace("INVERSIONS_HIST", ",".join(map(str, plot_data["inversions"])))
+html = html.replace("SMALL_BNDS", ",".join(map(str, plot_data["small BNDs"])))
+html = html.replace("LARGE_BNDS", ",".join(map(str, plot_data["large BNDs"])))
 try:
-    html = html.replace("INTERCHROMOSOMAL_BNDS", ",".join(plot_data["interchromosomal BNDs"]))
+    html = html.replace("INTERCHROMOSOMAL_BNDS", ",".join(map(str, plot_data["interchromosomal BNDs"])))
 except KeyError:
     pass
-html = html.replace("BNDS_HIST", ",".join(plot_data["bnds"]))
+html = html.replace("BNDS_HIST", ",".join(map(str, plot_data["bnds"])))
 
 with open("smoove-nf.html", "w") as fh:
     print(html, file=fh)
