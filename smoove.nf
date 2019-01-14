@@ -36,6 +36,8 @@ Channel
 process run_flagstat {
     tag "sample: $sample"
     publishDir path: "$outdir/logs", mode: "copy"
+    errorStrategy { task.attempt == 1 ? 'retry' : 'finish' }
+    cache 'lenient'
 
     input:
     set sample, file(bam), file(bai) from flagstat_bams
@@ -51,9 +53,11 @@ process run_flagstat {
 
 process smoove_call {
     tag "sample: $sample"
-    publishDir path: "$outdir/smoove-called", mode: "copy"
+    publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
+    publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     memory { 8.GB * task.attempt }
     errorStrategy { task.attempt == 1 ? 'retry' : 'ignore' }
+    cache 'lenient'
 
     input:
     set sample, file(bam), file(bai) from call_bams
@@ -76,8 +80,8 @@ process smoove_call {
 
 process smoove_merge {
     publishDir path: "$outdir/smoove-merged", mode: "copy"
-    cache 'deep'
     memory 15.GB
+    cache 'deep'
 
     input:
     file vcf from vcfs.collect()
@@ -97,6 +101,8 @@ process smoove_merge {
 process smoove_genotype {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
+    errorStrategy { task.attempt == 1 ? 'retry' : 'terminate' }
+    cache 'lenient'
 
     input:
     set sample, file(bam), file(bai) from genotype_bams
@@ -121,10 +127,11 @@ process smoove_genotype {
 }
 
 process smoove_square {
-    publishDir path: "$outdir/smoove-squared", mode: "copy"
-    cache 'deep'
+    publishDir path: "$outdir/smoove-squared", mode: "copy", pattern: "*.vcf.gz*"
+    publishDir path: "$outdir/bpbio", mode: "copy", pattern: "*.html"
     cpus 3
     memory 45.GB
+    cache 'deep'
 
     input:
     file vcf from genotyped_vcfs.collect()
@@ -148,6 +155,7 @@ process smoove_square {
 
 process run_indexcov {
     publishDir path: "$outdir/indexcov", mode: "copy"
+    cache 'deep'
 
     input:
     file idx from index_ch.collect()
@@ -163,9 +171,7 @@ process run_indexcov {
     script:
     excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
     """
-    curl --location 'https://github.com/brentp/goleft/releases/download/v0.2.1/goleft_linux64' > goleft
-    chmod +x goleft
-    ./goleft indexcov $excludepatt --directory $project --fai $faidx $idx
+    goleft indexcov $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
     """
 }
