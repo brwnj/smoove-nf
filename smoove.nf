@@ -27,34 +27,17 @@ log.info("\n")
 Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName.split("\\.")[0], file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
-    .into { flagstat_bams; call_bams; genotype_bams }
+    .into { call_bams; genotype_bams }
 
 Channel
     .fromPath(indexes, checkIfExists: true)
     .set { index_ch }
 
-process run_flagstat {
-    tag "sample: $sample"
-    publishDir path: "$outdir/logs", mode: "copy"
-    errorStrategy { task.attempt == 1 ? 'retry' : 'finish' }
-    cache 'lenient'
-
-    input:
-    set sample, file(bam), file(bai) from flagstat_bams
-
-    output:
-    file("${sample}-flagstat.txt") into sequence_counts
-
-    script:
-    """
-    samtools flagstat $bam > $sample-flagstat.txt
-    """
-}
-
 process smoove_call {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
+    publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
     memory { 8.GB * task.attempt }
     errorStrategy { task.attempt == 1 ? 'retry' : 'ignore' }
     cache 'lenient'
@@ -69,6 +52,7 @@ process smoove_call {
     file("${sample}-smoove.genotyped.vcf.gz") into vcfs
     file("${sample}-smoove.genotyped.vcf.gz.csi") into idxs
     file("${sample}-stats.txt") into variant_counts
+    file("${sample}-smoove-call.log") into sequence_counts
 
     script:
     excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''

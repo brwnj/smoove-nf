@@ -572,11 +572,12 @@ svvcf_html_file = "$variant_html"
 ## parse counts
 sample_counts = defaultdict(dict)
 for count_file in sequence_count_files:
-    sample = os.path.basename(count_file).partition("-flagstat")[0]
+    sample = os.path.basename(count_file).partition("-smoove-call")[0]
     with open(count_file) as fh:
+        # [lumpy_filter] extracted splits and discordants from %d total aligned reads
         for line in fh:
-            if "mapped" in line:
-                count = int(line.partition(" ")[0])
+            if "total aligned reads" in line:
+                count = int(line.partition("from ")[-1].partition(" total")[0])
                 sample_counts[sample]["mapped"] = count
                 sample_counts[sample]["variants"] = -1
                 # initialize the status messages
