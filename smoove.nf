@@ -78,7 +78,7 @@ process smoove_call {
     script:
     excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''
     """
-    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam
+    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam 2> ${sample}-smoove-call.log
     bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
     """
 }
