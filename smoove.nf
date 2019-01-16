@@ -1,28 +1,49 @@
+// required arguments
 params.bed = false
+if( !params.bed ) { exit 1, "--bed is not defined" }
 params.fasta = false
+if( !params.fasta ) { exit 1, "--fasta is not defined" }
 params.bams = false
+if( !params.bams ) { exit 1, "--bams is not defined" }
 params.outdir = false
+if( !params.outdir ) { exit 1, "--outdir is not defined" }
+params.gff = false
+if( !params.gff ) { exit 1, "--gff is not defined" }
+
+// optional
 params.excludechroms = false
 params.project = false
-params.gff = false
 
+// variables
 project = params.project ?: 'sites'
 outdir = params.outdir
+indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
+
+log.info("\n")
+log.info("Project                             : ${project}")
+log.info("Excluded regions (--bed)            : ${params.bed}")
+if( params.excludechroms ) {
+log.info("Excluded chroms (--excludechroms)   : ${params.excludechroms}")
+}
+log.info("Reference fasta (--fasta)           : ${params.fasta}")
+log.info("Alignments (--bams)                 : ${params.bams}")
+log.info("Indexes                             : ${indexes}")
+log.info("Annotation GFF (--gff)              : ${params.gff}")
+log.info("Output (--outdir)                   : ${outdir}")
+log.info("\n")
+
+// instantiate files
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
 gff = file(params.gff)
-indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
-log.info("\n")
-log.info("Project: ${project}")
-log.info("Excluded regions: ${params.bed}")
-if( params.excludechroms ) log.info("Excluded chroms: ${params.excludechroms}")
-log.info("Reference fasta: ${params.fasta}")
-log.info("Alignments: ${params.bams}")
-log.info("Annotation GFF: ${params.gff}")
-log.info("Output: ${outdir}")
-log.info("\n")
+// check file existence
+if( !fasta.exists() ) { exit 1, "Missing reference fasta: ${fasta}" }
+if( !faidx.exists() ) { exit 1, "Missing reference fasta index: ${faidx}" }
+if( !bed.exists() ) { exit 1, "Missing exclude regions: ${bed}" }
+if( !gff.exists() ) { exit 1, "Missing annotations: ${gff}" }
+
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
