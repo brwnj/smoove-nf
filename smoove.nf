@@ -20,16 +20,16 @@ outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 log.info("\n")
-log.info("Project                             : ${project}")
-log.info("Excluded regions (--bed)            : ${params.bed}")
+log.info("Project                              : ${project}")
+log.info("Excluded regions   (--bed)           : ${params.bed}")
 if( params.excludechroms ) {
-log.info("Excluded chroms (--excludechroms)   : ${params.excludechroms}")
+log.info("Excluded chroms    (--excludechroms) : ${params.excludechroms}")
 }
-log.info("Reference fasta (--fasta)           : ${params.fasta}")
-log.info("Alignments (--bams)                 : ${params.bams}")
-log.info("Indexes                             : ${indexes}")
-log.info("Annotation GFF (--gff)              : ${params.gff}")
-log.info("Output (--outdir)                   : ${outdir}")
+log.info("Reference fasta    (--fasta)         : ${params.fasta}")
+log.info("Alignments         (--bams)          : ${params.bams}")
+log.info("Indexes                              : ${indexes}")
+log.info("Annotation GFF     (--gff)           : ${params.gff}")
+log.info("Output             (--outdir)        : ${outdir}")
 log.info("\n")
 
 // instantiate files
