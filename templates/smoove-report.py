@@ -574,7 +574,7 @@ sample_counts = defaultdict(dict)
 for count_file in sequence_count_files:
     sample = os.path.basename(count_file).partition("-smoove-call")[0]
     with open(count_file) as fh:
-        # [lumpy_filter] extracted splits and discordants from %d total aligned reads
+        # [smoove]: ([E]lumpy-filter) 2019/01/16 21:45:01 [lumpy_filter] extracted splits and discordants from 701835557 total aligned reads
         for line in fh:
             if "total aligned reads" in line:
                 count = int(line.partition("from ")[-1].partition(" total")[0])
