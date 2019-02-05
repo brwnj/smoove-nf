@@ -32,6 +32,10 @@ html = """
     body {
         position: relative;
     }
+	/* fix asc/desc arrow positioning */
+	table.dataTable.table-sm .sorting:before, table.dataTable.table-sm .sorting_asc:before, table.dataTable.table-sm .sorting_desc:before {
+	    right: 1.15em;
+	}
     </style>
 </head>
 <body>
@@ -42,23 +46,22 @@ html = """
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
           <ul class="navbar-nav mr-auto">
-                <li class="nav-item"><a class="nav-link" href="#processing">Processing</a></li>
+                <li class="nav-item"><a class="nav-link" href="#processing">Samples</a></li>
+                <li class="nav-item"><a class="nav-link" href="#variants">Calls</a></li>
                 <li class="nav-item"><a class="nav-link" href="#coverage">Coverage</a></li>
                 <li class="nav-item"><a class="nav-link" href="#filtering">Filtering</a></li>
-                <li class="nav-item"><a class="nav-link" href="#variants">Variants</a></li>
                 <li class="nav-item"><a class="nav-link" href="#configuration">Configuration</a></li>
             </ul>
         </div>
     </nav>
 
     <div data-spy="scroll" data-target="#main_nav" data-offset="70" class="container pb-20">
-        <h1 id="processing">Sample Processing</h1>
-        <table id="sample_table" class="table table-striped" width="100%"></table>
-        <br>
+        <h1 class="border-bottom border-dark" id="processing">Summary table</h1>
         <p>Read and variant counts are obtained as samples are processed by <a href="https://github.com/arq5x/lumpy-sv">LUMPY</a>
            via <a href="https://github.com/brentp/smoove">smoove</a>. Samples where variants fail to be called tend
            to have a higher number of variants suggesting issues with the sample. Failed samples are not included
            in the merged VCF, but are genotyped and included in the annotated VCF.</p>
+		   <table id="sample_table" class="table table-striped table-sm" width="100%"></table>
         <script>
         \$('body').scrollspy({ target: '#main_nav' })
         var success = '<span class="badge badge-success">Success</span>'
@@ -79,172 +82,7 @@ html = """
         } );
         </script>
 
-        <h1 id="coverage">Sequence Coverage</h1>
-        <div class="row pb-5">
-            <div class="col-6">By scaling coverage to a median of 1, <a href="https://github.com/brentp/goleft/tree/master/indexcov">indexcov</a> infers sex based on X and Y copy-number states. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-sex.md">docs</a>]</div>
-            <div class="col-6">Ideally, sample depth per bin is near 1, indicating uniform coverage. Samples with a high number of low coverage bins fall to the right of the plot and samples towards the top of the plot have many regions outside of the expected coverage. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-bin.md">docs</a>]</div>
-        </div>
-        <div class="row">
-            <div id="inferred_sex" class="col-6"></div>
-            <div id="bin_counts" class="col-6"></div>
-            <script>
-            var samples = [COVERAGE_SAMPLE_LIST];
-            var data1 = [{
-                x: [INFERRED_X1],
-                y: [INFERRED_Y1],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Inferred CN for X: 1',
-                text: [INFERRED_SAMPLES1],
-                hoverinfo: 'text',
-                marker: {
-                  size: 12,
-                  color: 'rgba(31,120,180,0.5)',
-                  line: {
-                      color: 'rgb(40,40,40)',
-                      width: 1,
-                  }
-                },
-            },{
-                x: [INFERRED_X2],
-                y: [INFERRED_Y2],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Inferred CN for X: 2',
-                text: [INFERRED_SAMPLES2],
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(227,26,28,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            var layout = {
-                title: "Inferred Sex",
-                margin: {t: 35},
-                height: 450,
-                xaxis: {title: "X Copy Number"},
-                yaxis: {title: "Y Copy Number"},
-                hovermode: "closest",
-                legend: {"orientation": "v"}
-            }
-            var plot0 = Plotly.newPlot('inferred_sex', data1, layout)
-
-            layout.title = "Problematic low and non-uniform coverage bins"
-            layout.xaxis.title = "Proportion of bins with depth < 0.15"
-            layout.yaxis.title = "Proportion of bins with depth outside of (0.85, 1.15)"
-            data = [{
-                x: [BIN_X],
-                y: [BIN_Y],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Bins',
-                text: samples,
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(31,120,180,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            var plot1 = Plotly.newPlot('bin_counts', data, layout)
-            </script>
-        </div>
-
-        [PCA_DIV]
-
-        <h3>Genome Coverage</h3>
-        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-depth.md">docs</a>]</p>
-        <div class="container" id="cov_plot"></div>
-            <div class="container pb-5">
-            <div id="chrom_selector" class="btn-group btn-group-toggle d-flex p-2 justify-content-center flex-wrap" data-toggle="buttons">
-                  [CHROM_BUTTONS]
-            </div>
-
-            <script>
-            var cov_color = 'rgba(128,128,128,0.3)'
-            var cov_layout = {
-                title: "",
-                margin: {t: 55},
-                height: 450,
-                xaxis: {title: "Scaled Coverage", showgrid: false, range: [0, 1.5]},
-                yaxis: {title: "Proportion of Regions Covered", range: [0, 1.]},
-                hovermode: "closest",
-                showlegend: false,
-            }
-            var cov_data = [CHROM_DATA]
-            var cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
-            cov_layout.title = "Chromosome " + \$('#chrom_selector input:radio:checked').data('name')
-            Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
-
-            jQuery('#chrom_selector').on("change", function() {
-                cov_layout.title = "Chromosome " + \$('#chrom_selector input:radio:checked').data('name')
-                cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
-                Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
-            })
-            </script>
-        </div>
-
-        <h3>Full indexcov Results</h3>
-        <p>INDEXCOV_RESULT</p>
-
-        <h1 id="filtering">Alignment Filtering</h1>
-        <p>Split and discordant read filtering results as reported by <code>smoove call</code>.</p>
-
-        <div class="row">
-            <div id="plot_before" class="col-6"></div>
-            <div id="plot_after" class="col-6"></div>
-            <script>
-            var filter_samples = [FILTERED_SAMPLES]
-            var data = [{
-                x: [SPLIT_BEFORE],
-                y: [DISCORDANT_BEFORE],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'Before Filtering',
-                text: filter_samples,
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(31,120,180,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            var layout = {title: "Before", margin:{t: 35}, height: 450, xaxis:{title:"Split Reads"}, yaxis:{"title":"Discordant Reads"},"hovermode":"closest"}
-            var plot0 = Plotly.newPlot('plot_before', data, layout)
-
-            data = [{
-                x: [SPLIT_AFTER],
-                y: [DISCORDANT_AFTER],
-                mode: 'markers',
-                type: 'scatter',
-                name: 'After Filtering',
-                text: filter_samples,
-                hoverinfo: 'text',
-                marker: {
-                    size: 12,
-                    color: 'rgba(31,120,180,0.5)',
-                    line: {
-                        color: 'rgb(40,40,40)',
-                        width: 1,
-                    }
-                },
-            }]
-            layout.title = "After"
-            var plot1 = Plotly.newPlot('plot_after', data, layout)
-            </script>
-        </div>
-
-        <h1 id="variants">Variant Summary</h1>
+        <h1 class="border-bottom border-dark" id="variants">SV call summary by sample</h1>
         <h3>Deletions</h3>
         <div class="row">
           <div id="deletions_p1" class="col-6"></div>
@@ -443,7 +281,181 @@ html = """
         Plotly.newPlot('bnd_p2', bnd_p2_data, variant_hist_layout)
         </script>
 
-        <h1 id="configuration">Configuration</h1>
+        <h1 class="border-bottom border-dark" id="coverage">Sample coverage profiles</h1>
+        <div class="row pb-5">
+            <div class="col-6">
+                <h3 id="scp_inferred_sex">Inferred sex</h3>
+                By scaling coverage to a median of 1, <a href="https://github.com/brentp/goleft/tree/master/indexcov">indexcov</a> infers sex based on X and Y copy-number states. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-sex.md">docs</a>]
+            </div>
+            <div class="col-6">
+                <h3 id="scp_bin_counts">Bin counts</h3>
+                Ideally, sample depth per bin is near 1, indicating uniform coverage. Samples with a high number of low coverage bins fall to the right of the plot and samples towards the top of the plot have many regions outside of the expected coverage. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-bin.md">docs</a>]
+            </div>
+        </div>
+        <div class="row">
+            <div id="inferred_sex" class="col-6"></div>
+            <div id="bin_counts" class="col-6"></div>
+            <script>
+            var samples = [COVERAGE_SAMPLE_LIST];
+            var data1 = [{
+                x: [INFERRED_X1],
+                y: [INFERRED_Y1],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Inferred CN for X: 1',
+                text: [INFERRED_SAMPLES1],
+                hoverinfo: 'text',
+                marker: {
+                  size: 12,
+                  color: 'rgba(31,120,180,0.5)',
+                  line: {
+                      color: 'rgb(40,40,40)',
+                      width: 1,
+                  }
+                },
+            },{
+                x: [INFERRED_X2],
+                y: [INFERRED_Y2],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Inferred CN for X: 2',
+                text: [INFERRED_SAMPLES2],
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(227,26,28,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            var layout = {
+                title: "Inferred Sex",
+                margin: {t: 35},
+                height: 450,
+                xaxis: {title: "X Copy Number"},
+                yaxis: {title: "Y Copy Number"},
+                hovermode: "closest",
+                legend: {"orientation": "v"}
+            }
+            var plot0 = Plotly.newPlot('inferred_sex', data1, layout)
+
+            layout.title = "Problematic low and non-uniform coverage bins"
+            layout.xaxis.title = "Proportion of bins with depth < 0.15"
+            layout.yaxis.title = "Proportion of bins with depth outside of (0.85, 1.15)"
+            data = [{
+                x: [BIN_X],
+                y: [BIN_Y],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Bins',
+                text: samples,
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(31,120,180,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            var plot1 = Plotly.newPlot('bin_counts', data, layout)
+            </script>
+        </div>
+
+        [PCA_DIV]
+
+        <h3>Cumulative chromosome coverage</h3>
+        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-depth.md">docs</a>]</p>
+        <div class="row">
+            <div class="col-12 pt-3 pb-4">
+                 <div id="chrom_selector" class="btn-group btn-group-toggle d-flex justify-content-center flex-wrap" data-toggle="buttons">
+                      <div class="input-group-prepend">
+                          <span class="input-group-text" id="basic-addon1">Chromosome:</span>
+                      </div>
+                      [CHROM_BUTTONS]
+                </div>
+            </div>
+            <div class="col-12" id="cov_plot"></div>
+        </div>
+
+        <script>
+        var cov_color = 'rgba(128,128,128,0.3)'
+        var cov_layout = {
+            title: "",
+            margin: {t: 55},
+            height: 450,
+            xaxis: {title: "Scaled Coverage", showgrid: false, range: [0, 1.5]},
+            yaxis: {title: "Proportion of Regions Covered", range: [0, 1.]},
+            hovermode: "closest",
+            showlegend: false,
+        }
+        var cov_data = [CHROM_DATA]
+        var cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
+        Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+
+        jQuery('#chrom_selector').on("change", function() {
+            cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
+            Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+        })
+        </script>
+
+        <h3>Full indexcov Results</h3>
+        <p>INDEXCOV_RESULT</p>
+
+        <h1 class="border-bottom border-dark" id="filtering">Alignment Filtering</h1>
+        <p>Split and discordant read filtering results as reported by <code>smoove call</code>.</p>
+
+        <div class="row">
+            <div id="plot_before" class="col-6"></div>
+            <div id="plot_after" class="col-6"></div>
+            <script>
+            var filter_samples = [FILTERED_SAMPLES]
+            var data = [{
+                x: [SPLIT_BEFORE],
+                y: [DISCORDANT_BEFORE],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Before Filtering',
+                text: filter_samples,
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(31,120,180,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            var layout = {title: "Before", margin:{t: 35}, height: 450, xaxis:{title:"Split Reads"}, yaxis:{"title":"Discordant Reads"},"hovermode":"closest"}
+            var plot0 = Plotly.newPlot('plot_before', data, layout)
+
+            data = [{
+                x: [SPLIT_AFTER],
+                y: [DISCORDANT_AFTER],
+                mode: 'markers',
+                type: 'scatter',
+                name: 'After Filtering',
+                text: filter_samples,
+                hoverinfo: 'text',
+                marker: {
+                    size: 12,
+                    color: 'rgba(31,120,180,0.5)',
+                    line: {
+                        color: 'rgb(40,40,40)',
+                        width: 1,
+                    }
+                },
+            }]
+            layout.title = "After"
+            var plot1 = Plotly.newPlot('plot_after', data, layout)
+            </script>
+        </div>
+
+        <h1 class="border-bottom border-dark" id="configuration">Configuration</h1>
         <h3>Parameters</h3>
         <dl class="row small">
             <dt class="col-sm-3"><code>--bams</code></dt>
@@ -482,7 +494,7 @@ html = """
             <dd class="col-sm-9">$workflow.commandLine</dd>
         </dl>
 
-        <h1 id="software">Software</h1>
+        <h1 class="border-bottom border-dark" id="software">Software</h1>
         <dl class="row small">
             <dt class="col-sm-3">smoove</dt>
             <dd class="col-sm-9">https://github.com/brentp/smoove</dd>
@@ -508,6 +520,7 @@ html = """
 """
 
 pca_div = """
+        <h3 id="scp_principal_components">Principle components</h3>
         <p>PCA is used to summarize samples by their non-sex chromosome bins. Groups of samples may indicate major batch effects in the underlying data. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-pca.md">docs</a>]</p>
         <div class="row">
             <div id="pca1_2" class="col-6"></div>
@@ -732,7 +745,7 @@ with open(svvcf_html_file) as fh:
             else:
                 plot_data[histograms[plot_position]] = data[0]["x"]
             plot_position += 1
-html = html.replace("VARIANT_SAMPLE_LIST", ",".join(['"{}"'.format(i) for i in var_samples]))
+html = html.replace("VARIANT_SAMPLE_LIST", ",".join(["'{}'".format(i) for i in var_samples]))
 html = html.replace("SMALL_DELETIONS", ",".join(map(str, plot_data["small deletions"])))
 html = html.replace("LARGE_DELETIONS", ",".join(map(str, plot_data["large deletions"])))
 html = html.replace("DELETIONS_HIST", ",".join(map(str, plot_data["deletions"])))
