@@ -110,7 +110,7 @@ html = """
             xaxis: {
                 title: "Sample",
                 showticklabels: false,
-                autorange: true
+				type: 'category',
             },
             yaxis: {
                 title: "",
