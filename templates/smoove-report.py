@@ -580,6 +580,7 @@ square_vcf_file = "$vcf"
 ped_file = "$pedfile"
 indexcov_roc_file = "$rocfile"
 svvcf_html_file = "$variant_html"
+sex_chroms = "$sexchroms".split(",")
 
 # building the sample summary table
 ## parse counts
@@ -649,12 +650,18 @@ with open(ped_file) as fh:
         # inferred sex
         if row["sex"] == "1":
             ped_data["inferred_samples1"].append(row["sample_id"])
-            ped_data["inferred_x1"].append(row[list(row.keys())[6]])
-            ped_data["inferred_y1"].append(row[list(row.keys())[7]])
+            ped_data["inferred_x1"].append(row["CN%s" % sex_chroms[0]])
+            try:
+                ped_data["inferred_y1"].append(row["CN%s" % sex_chroms[1]])
+            except IndexError:
+                ped_data["inferred_y1"].append(0)
         else:
             ped_data["inferred_samples2"].append(row["sample_id"])
-            ped_data["inferred_x2"].append(row[list(row.keys())[6]])
-            ped_data["inferred_y2"].append(row[list(row.keys())[7]])
+            ped_data["inferred_x2"].append(row["CN%s" % sex_chroms[0]])
+            try:
+                ped_data["inferred_y2"].append(row["CN%s" % sex_chroms[1]])
+            except IndexError:
+                ped_data["inferred_y1"].append(0)
         # bin plot
         total = float(row["bins.in"]) + float(row["bins.out"])
         ped_data["samples"].append(row["sample_id"])
