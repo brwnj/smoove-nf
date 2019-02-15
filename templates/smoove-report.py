@@ -423,7 +423,7 @@ html = """
         }
 
         function build_coverage_by_position_plot(chrom) {
-            \$.getJSON("report_data/" + selected_chrom + ".json", function(json) {
+            \$.getJSON("report_data/" + chrom + ".json", function(json) {
                 scaled_cov_plot_data = json
                 var scaled_cov_plot = document.getElementById("scaled_cov_plot")
                 Plotly.newPlot(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
@@ -432,9 +432,9 @@ html = """
         }
 
         jQuery('#chrom_selector').on("change", function() {
-            selected_chrom = \$('#chrom_selector input:radio:checked').data('name')
-            build_coverage_by_percent_plot(selected_chrom)
-            build_coverage_by_position_plot(selected_chrom)
+            var chrom = \$('#chrom_selector input:radio:checked').data('name')
+            build_coverage_by_percent_plot(chrom)
+            build_coverage_by_position_plot(chrom)
         })
 
         function coverage_plot_click(click_data) {
@@ -808,8 +808,8 @@ for chrom in allowable:
         traces = list()
         for i, sample in enumerate(sample_list):
             trace = dict(
-                x=data[chrom]["x"],
-                y=data[chrom][sample],
+                x=int(data[chrom]["x"]),
+                y=float(data[chrom][sample]) if float(data[chrom][sample]) < 3 else 3,
                 hoverinfo="text",
                 type="scattergl",
                 mode="lines",
