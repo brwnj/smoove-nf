@@ -649,12 +649,12 @@ with open(ped_file) as fh:
         # inferred sex
         if row["sex"] == "1":
             ped_data["inferred_samples1"].append(row["sample_id"])
-            ped_data["inferred_x1"].append(row["CNX"])
-            ped_data["inferred_y1"].append(row["CNY"])
+            ped_data["inferred_x1"].append(row[list(row.keys())[6]])
+            ped_data["inferred_y1"].append(row[list(row.keys())[7]])
         else:
             ped_data["inferred_samples2"].append(row["sample_id"])
-            ped_data["inferred_x2"].append(row["CNX"])
-            ped_data["inferred_y2"].append(row["CNY"])
+            ped_data["inferred_x2"].append(row[list(row.keys())[6]])
+            ped_data["inferred_y2"].append(row[list(row.keys())[7]])
         # bin plot
         total = float(row["bins.in"]) + float(row["bins.out"])
         ped_data["samples"].append(row["sample_id"])
