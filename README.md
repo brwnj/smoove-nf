@@ -25,7 +25,7 @@ nextflow run brwnj/smoove-nf --project SRP1234
 
 ### `--sexchroms`
 
-Tells `indexcov` the chromosomes to use when inferring sex.
+Comma delimited names of the sex chromosome(s) used to infer sex.
 
 * Default: 'X,Y'
 
