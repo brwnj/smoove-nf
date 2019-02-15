@@ -13,9 +13,12 @@ if( !params.gff ) { exit 1, "--gff is not defined" }
 // optional
 params.excludechroms = false
 params.project = false
+params.sexchroms = false
 
 // variables
 project = params.project ?: 'sites'
+sexchroms = params.sexchroms ?: 'X,Y'
+sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
@@ -26,6 +29,7 @@ if( params.excludechroms ) {
 log.info("Excluded chroms    (--excludechroms) : ${params.excludechroms}")
 }
 log.info("Reference fasta    (--fasta)         : ${params.fasta}")
+log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
 log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
@@ -176,7 +180,7 @@ process run_indexcov {
     script:
     excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
     """
-    goleft indexcov $excludepatt --directory $project --fai $faidx $idx
+    goleft indexcov --sex $sexchroms $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
     """
 }
