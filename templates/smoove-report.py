@@ -61,7 +61,7 @@ html = """
            via <a href="https://github.com/brentp/smoove">smoove</a>. Samples where variants fail to be called tend
            to have a higher number of variants suggesting issues with the sample. Failed samples are not included
            in the merged VCF, but are genotyped and included in the annotated VCF.</p>
-		   <table id="sample_table" class="table table-striped table-sm" width="100%"></table>
+		   <table id="sample_table" class="table table-hover table-sm" width="100%"></table>
         <script>
         \$('body').scrollspy({ target: '#main_nav' })
         var success = '<span class="badge badge-success">Success</span>'
