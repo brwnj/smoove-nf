@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import csv
 import gzip
+import json
 import os
 
 from collections import defaultdict
@@ -79,6 +80,10 @@ html = """
                     { title: "Genotyped" },
                 ]
             } );
+
+            var selected_chrom = \$('#chrom_selector input:radio:checked').data('name')
+            build_coverage_by_percent_plot(selected_chrom)
+            build_coverage_by_position_plot(selected_chrom)
         } );
         </script>
 
@@ -379,27 +384,83 @@ html = """
                 </div>
             </div>
             <div class="col-12" id="cov_plot"></div>
+            <div class="col-12" id="scaled_cov_plot"</div>
         </div>
 
         <script>
-        var cov_color = 'rgba(128,128,128,0.3)'
+        var cov_color = 'rgba(108,117,125,0.3)'
         var cov_layout = {
             title: "",
-            margin: {t: 55},
-            height: 450,
+            margin: {t: 10, b: 40},
+            height: 350,
             xaxis: {title: "Scaled Coverage", showgrid: false, range: [0, 1.5]},
             yaxis: {title: "Proportion of Regions Covered", range: [0, 1.]},
             hovermode: "closest",
             showlegend: false,
         }
+        var scaled_cov_layout = {
+            title: "",
+            margin: {t: 10, b: 40},
+            height: 450,
+            xaxis: {
+                title: "Position",
+                rangeslider: {},
+                showgrid: false
+            },
+            yaxis: {title: "Scaled Coverage", fixedrange: true},
+            hovermode: "closest",
+            showlegend: false,
+        }
         var cov_data = [CHROM_DATA]
         var cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
-        Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+        var scaled_cov_plot_data;
+
+        function build_coverage_by_percent_plot(chrom) {
+            cov_plot_data = cov_data[chrom]
+            var cov_plot = document.getElementById("cov_plot")
+            Plotly.newPlot(cov_plot, cov_plot_data, cov_layout)
+            cov_plot.on("plotly_click", coverage_plot_click)
+        }
+
+        function build_coverage_by_position_plot(chrom) {
+            \$.getJSON("report_data/" + selected_chrom + ".json", function(json) {
+                scaled_cov_plot_data = json
+                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
+                Plotly.newPlot(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
+                scaled_cov_plot.on("plotly_click", coverage_plot_click)
+            })
+        }
 
         jQuery('#chrom_selector').on("change", function() {
-            cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
-            Plotly.newPlot('cov_plot', cov_plot_data, cov_layout)
+            selected_chrom = \$('#chrom_selector input:radio:checked').data('name')
+            build_coverage_by_percent_plot(selected_chrom)
+            build_coverage_by_position_plot(selected_chrom)
         })
+
+        function coverage_plot_click(click_data) {
+            var local_plot_data = click_data.points[0].data
+            var sample_id = local_plot_data.text
+
+            for (var i = 0; i < scaled_cov_plot_data.length; i++) {
+                // de-select traces
+                scaled_cov_plot_data[i].marker.color = cov_color
+                if (scaled_cov_plot_data[i].text == sample_id) {
+                    scaled_cov_plot_data[i].marker.color = 'rgb(255,99,71)'
+                }
+            }
+
+            for (var i = 0; i < cov_plot_data.length; i++) {
+                // de-select traces
+                cov_plot_data[i].marker.color = cov_color
+                if (cov_plot_data[i].text == sample_id) {
+                    // set color based on trace index
+                    cov_plot_data[i].marker.color = 'rgb(255,99,71)'
+                }
+            }
+
+            Plotly.redraw("cov_plot")
+            Plotly.redraw("scaled_cov_plot")
+        }
         </script>
 
         <h3>Full indexcov Results</h3>
@@ -580,6 +641,7 @@ square_vcf_file = "$vcf"
 ped_file = "$pedfile"
 indexcov_roc_file = "$rocfile"
 svvcf_html_file = "$variant_html"
+bed_file = "$bedfile"
 sex_chroms = "$sexchroms".split(",")
 
 # building the sample summary table
@@ -697,7 +759,7 @@ html = html.replace("[PCA_DIV]", pca_div)
 index_cov_output = "$outdir/indexcov/index.html".replace("s3://", "https://s3.amazonaws.com/")
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
 
-# build the chromosome coverage plots
+# build the chromosome coverage plots for 'by percentage'
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
 with open(indexcov_roc_file) as fh:
     reader = csv.DictReader(fh, delimiter="\\t")
@@ -729,6 +791,36 @@ for chrom in allowable:
 cov_data += "}"
 html = html.replace("[CHROM_BUTTONS]", buttons)
 html = html.replace("[CHROM_DATA]", cov_data)
+
+# build the chromosome coverage plots for 'by position'
+with gzip.open(bed_file, "rt") as fh:
+    reader = csv.DictReader(fh, delimiter="\t")
+    data = defaultdict(lambda: defaultdict(list))
+    for row in reader:
+        chrom = row["#chrom"].strip("chr")
+        if chrom not in allowable:
+            continue
+        data[chrom]["x"].append(row["start"])
+        for sample in sample_list:
+            data[chrom][sample].append(row[sample])
+for chrom in allowable:
+    with open("%s.json" % chrom, "w") as fh:
+        traces = list()
+        for i, sample in enumerate(sample_list):
+            trace = dict(
+                x=data[chrom]["x"],
+                y=data[chrom][sample],
+                hoverinfo="text",
+                type="scattergl",
+                mode="lines",
+                text=sample,
+                marker={"color":"rgba(108,117,125,0.3)"}
+            )
+            if i < 5:
+                # ensures lines are in the range selection preview
+                trace["type"] = "scatter"
+            traces.append(trace)
+        print(json.dumps(traces), file=fh)
 
 # build the variant summary plots
 var_samples = []

@@ -173,7 +173,7 @@ process run_indexcov {
     output:
     file("${project}*.png")
     file("*.html")
-    file("${project}*.bed.gz")
+    file("${project}*.bed.gz") into coverage_bed
     file("${project}*.ped") into ped
     file("${project}*.roc") into roc
 
@@ -186,7 +186,8 @@ process run_indexcov {
 }
 
 process build_report {
-    publishDir path: "$outdir", mode: "copy", overwrite: true
+    publishDir path: "$outdir", mode: "copy", pattern: "*.html", overwrite: true
+    publishDir path: "$outdir/report_data", mode: "copy", pattern: "*.json"
     cache false
 
     input:
@@ -196,9 +197,11 @@ process build_report {
     file pedfile from ped
     file rocfile from roc
     file variant_html from svvcf
+    file bedfile from coverage_bed
 
     output:
     file("smoove-nf.html")
+    file("*.json")
 
     script:
     template 'smoove-report.py'
