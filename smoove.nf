@@ -168,7 +168,7 @@ process run_indexcov {
 
     output:
     file("${project}*.png")
-    file("${project}*.html")
+    file("*.html")
     file("${project}*.bed.gz")
     file("${project}*.ped") into ped
     file("${project}*.roc") into roc
