@@ -23,6 +23,16 @@ Acts as the file prefix for merged and squared sites.
 nextflow run brwnj/smoove-nf --project SRP1234
 ```
 
+### `--sexchroms`
+
+Tells `indexcov` the chromosomes to use when inferring sex.
+
+* Default: 'X,Y'
+
+```
+nextflow run brwnj/smoove-nf --sexchroms 'chrX,chrY'
+```
+
 ### `--fasta`
 
 File path to reference fasta. Index (.fai) must be present.
@@ -31,6 +41,9 @@ File path to reference fasta. Index (.fai) must be present.
 nextflow run brwnj/smoove-nf --fasta /assets/g1k_v37_decoy/g1k_v37_decoy.fa
 ```
 
+GRCh38 reference is available at:
+ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/GRCh38_reference_genome
+
 ### `--bed`
 
 File path to bed of exclude regions for `smoove call`.
@@ -38,6 +51,9 @@ File path to bed of exclude regions for `smoove call`.
 ```
 nextflow run brwnj/smoove-nf --bed /assets/regions.exclude.bed.gz
 ```
+
+Exclude regions for b37 and GRCh38 are available at:
+https://github.com/hall-lab/speedseq/tree/master/annotations
 
 ### `--outdir`
 
@@ -58,3 +74,6 @@ nextflow run brwnj/smoove-nf --excludechroms "hs37d5,~:,~^GL,~decoy,~random\$,~c
 ### `--gff`
 
 Annotation GFF used in `smoove annotate`.
+
+GRCh38 reference is available via Ensembl at:
+ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz
