@@ -5,6 +5,7 @@ import csv
 import gzip
 import json
 import os
+import re
 
 from collections import defaultdict
 from itertools import chain, groupby
@@ -179,8 +180,8 @@ html = """
         ]
         variant_bar_layout.yaxis.title = "Deletions"
         variant_hist_layout.xaxis.title = "# of Samples with Deletions"
-        Plotly.newPlot('deletions_p1', deletions_p1_data, variant_bar_layout)
-        Plotly.newPlot('deletions_p2', deletions_p2_data, variant_hist_layout)
+        Plotly.react('deletions_p1', deletions_p1_data, variant_bar_layout)
+        Plotly.react('deletions_p2', deletions_p2_data, variant_hist_layout)
 
         var duplications_p1_data = [
             {
@@ -212,8 +213,8 @@ html = """
         ]
         variant_bar_layout.yaxis.title = "Duplications"
         variant_hist_layout.xaxis.title = "# of Samples with Duplications"
-        Plotly.newPlot('duplications_p1', duplications_p1_data, variant_bar_layout)
-        Plotly.newPlot('duplications_p2', duplications_p2_data, variant_hist_layout)
+        Plotly.react('duplications_p1', duplications_p1_data, variant_bar_layout)
+        Plotly.react('duplications_p2', duplications_p2_data, variant_hist_layout)
 
         var inversions_p1_data = [
             {
@@ -245,8 +246,8 @@ html = """
         ]
         variant_bar_layout.yaxis.title = "Inversions"
         variant_hist_layout.xaxis.title = "# of Samples with Inversions"
-        Plotly.newPlot('inversions_p1', inversions_p1_data, variant_bar_layout)
-        Plotly.newPlot('inversions_p2', inversions_p2_data, variant_hist_layout)
+        Plotly.react('inversions_p1', inversions_p1_data, variant_bar_layout)
+        Plotly.react('inversions_p2', inversions_p2_data, variant_hist_layout)
 
         var bnd_p1_data = [
             {
@@ -285,8 +286,8 @@ html = """
         ]
         variant_bar_layout.yaxis.title = "Break Ends"
         variant_hist_layout.xaxis.title = "# of Samples with Break Ends"
-        Plotly.newPlot('bnd_p1', bnd_p1_data, variant_bar_layout)
-        Plotly.newPlot('bnd_p2', bnd_p2_data, variant_hist_layout)
+        Plotly.react('bnd_p1', bnd_p1_data, variant_bar_layout)
+        Plotly.react('bnd_p2', bnd_p2_data, variant_hist_layout)
         </script>
 
         <h1 class="border-bottom border-dark" id="coverage">Sample coverage profiles</h1>
@@ -347,7 +348,7 @@ html = """
                 hovermode: "closest",
                 legend: {"orientation": "v"}
             }
-            var plot0 = Plotly.newPlot('inferred_sex', data1, layout)
+            var plot0 = Plotly.react('inferred_sex', data1, layout)
 
             layout.title = "Problematic low and non-uniform coverage bins"
             layout.xaxis.title = "Proportion of bins with depth < 0.15"
@@ -369,7 +370,7 @@ html = """
                     }
                 },
             }]
-            var plot1 = Plotly.newPlot('bin_counts', data, layout)
+            var plot1 = Plotly.react('bin_counts', data, layout)
             </script>
         </div>
 
@@ -433,7 +434,7 @@ html = """
         function build_coverage_by_percent_plot(chrom) {
             cov_plot_data = cov_data[chrom]
             var cov_plot = document.getElementById("cov_plot")
-            Plotly.newPlot(cov_plot, cov_plot_data, cov_layout)
+            Plotly.react(cov_plot, cov_plot_data, cov_layout)
             cov_plot.on("plotly_click", coverage_plot_click)
         }
 
@@ -445,7 +446,7 @@ html = """
 					const y_values = [];
 					const text_values = [];
 					let offset = -0.25
-					for (var i = 0; i < exons.length; i += 2) {
+					for (var i = 0; i < exons.length; i += 3) {
 
 						x_values.push(Number(exons[i]))
 						x_values.push(Number(exons[i + 1]))
@@ -455,8 +456,8 @@ html = """
 						y_values.push(offset)
 						y_values.push(NaN)
 
-						text_values.push(Number(exons[i]))
-						text_values.push(Number(exons[i + 1]))
+						text_values.push(exons[i + 2])
+						text_values.push(exons[i + 2])
 						text_values.push(NaN)
 
 					}
@@ -475,7 +476,7 @@ html = """
 					}
 					scaled_cov_plot_data.push(exon_trace)
 	                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
-	                Plotly.newPlot(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
+	                Plotly.react(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
 	                scaled_cov_plot.on("plotly_click", coverage_plot_click)
 	            })
 			})
@@ -542,7 +543,7 @@ html = """
                 },
             }]
             var layout = {title: "Before", margin:{t: 35}, height: 450, xaxis:{title:"Split Reads"}, yaxis:{"title":"Discordant Reads"},"hovermode":"closest"}
-            var plot0 = Plotly.newPlot('plot_before', data, layout)
+            var plot0 = Plotly.react('plot_before', data, layout)
 
             data = [{
                 x: [SPLIT_AFTER],
@@ -562,7 +563,7 @@ html = """
                 },
             }]
             layout.title = "After"
-            var plot1 = Plotly.newPlot('plot_after', data, layout)
+            var plot1 = Plotly.react('plot_after', data, layout)
             </script>
         </div>
 
@@ -658,7 +659,7 @@ pca_div = """
                     }
                 },
             }]
-            var plot2 = Plotly.newPlot('pca1_2', data, layout)
+            var plot2 = Plotly.react('pca1_2', data, layout)
 
             layout.title = "PCA: 1 vs 3"
             layout.xaxis.title = "PC1"
@@ -680,7 +681,7 @@ pca_div = """
                     }
                 },
             }]
-            var plot3 = Plotly.newPlot('pca1_3', data, layout)
+            var plot3 = Plotly.react('pca1_3', data, layout)
             </script>
         </div>
 """
@@ -696,11 +697,11 @@ def merge_intervals(intervals):
             # merge bookends
             if higher[0] - lower[1] == 1:
                 # update existing entry
-                merged[-1] = (lower[0], higher[1])
+                merged[-1] = [lower[0], higher[1], lower[2] + higher[2]]
             elif higher[0] <= lower[1]:
                 upper_bound = max(lower[1], higher[1])
                 # update existing entry
-                merged[-1] = (lower[0], upper_bound)
+                merged[-1] = [lower[0], upper_bound, lower[2] + higher[2]]
             # non-overlapping
             else:
                 merged.append(higher)
@@ -897,6 +898,7 @@ for chrom in allowable:
 # add the gene track data for the coverage plots
 with gzopen(gff_file) as fh:
     for chrom, chrom_group in groupby(fh, key=lambda i: i.partition("\t")[0].strip("chr")):
+        name_re = re.compile(r"gene_name=([^;]*)")
         if not chrom in allowable:
             continue
         exons = list()
@@ -906,9 +908,12 @@ with gzopen(gff_file) as fh:
             toks = line.strip().split("\t")
             if toks[2] != "exon":
                 continue
-            exons.append([int(toks[3]), int(toks[4])])
+            exons.append([int(toks[3]), int(toks[4]), [name_re.findall(toks[8])[0]]])
         if exons:
             merged_exons = merge_intervals(exons)
+            # update gene lists to semi-colon delimited string
+            for interval in merged_exons:
+                interval[2] = ";".join(set(interval[2]))
             with open("gene_track_%s.json" % chrom, "w") as ofh:
                 print(json.dumps(list(chain.from_iterable(merged_exons))), file=ofh)
 
