@@ -800,16 +800,16 @@ with gzip.open(bed_file, "rt") as fh:
         chrom = row["#chrom"].strip("chr")
         if chrom not in allowable:
             continue
-        data[chrom]["x"].append(row["start"])
+        data[chrom]["x"].append(int(row["start"]))
         for sample in sample_list:
-            data[chrom][sample].append(row[sample])
+            data[chrom][sample].append(float(row[sample]) if float(row[sample]) < 3 else 3)
 for chrom in allowable:
     with open("%s.json" % chrom, "w") as fh:
         traces = list()
         for i, sample in enumerate(sample_list):
             trace = dict(
-                x=int(data[chrom]["x"]),
-                y=float(data[chrom][sample]) if float(data[chrom][sample]) < 3 else 3,
+                x=data[chrom]["x"],
+                y=data[chrom][sample],
                 hoverinfo="text",
                 type="scattergl",
                 mode="lines",
