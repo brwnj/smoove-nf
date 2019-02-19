@@ -76,4 +76,9 @@ nextflow run brwnj/smoove-nf --excludechroms "hs37d5,~:,~^GL,~decoy,~random\$,~c
 Annotation GFF used in `smoove annotate`.
 
 GRCh38 reference is available via Ensembl at:
+
 ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz
+
+Or GENCODE:
+
+ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_29/gencode.v29.annotation.gff3.gz
