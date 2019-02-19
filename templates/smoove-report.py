@@ -7,6 +7,9 @@ import json
 import os
 
 from collections import defaultdict
+from itertools import chain, groupby
+
+gzopen = lambda f: gzip.open(f, "rt") if f.endswith(".gz") else open(f)
 
 
 html = """
@@ -62,7 +65,7 @@ html = """
            via <a href="https://github.com/brentp/smoove">smoove</a>. Samples where variants fail to be called tend
            to have a higher number of variants suggesting issues with the sample. Failed samples are not included
            in the merged VCF, but are genotyped and included in the annotated VCF.</p>
-		   <table id="sample_table" class="table table-hover table-sm" width="100%"></table>
+		<table id="sample_table" class="table table-hover table-sm" width="100%"></table>
         <script>
         \$('body').scrollspy({ target: '#main_nav' })
         var success = '<span class="badge badge-success">Success</span>'
@@ -405,9 +408,21 @@ html = """
             xaxis: {
                 title: "Position",
                 rangeslider: {},
-                showgrid: false
+                showgrid: false,
+				showlines: false,
+				// showticklabels: false,
+				// ticks: '',
+				zeroline: false,
             },
-            yaxis: {title: "Scaled Coverage", fixedrange: true},
+            yaxis: {
+				title: "Scaled Coverage",
+				fixedrange: true,
+				domain: [0, 3],
+				showgrid: true,
+				showticklabels: true,
+				tickvals: [0, 1, 2, 3],
+				zeroline: false,
+			},
             hovermode: "closest",
             showlegend: false,
         }
@@ -423,12 +438,47 @@ html = """
         }
 
         function build_coverage_by_position_plot(chrom) {
-            \$.getJSON("report_data/" + chrom + ".json", function(json) {
-                scaled_cov_plot_data = json
-                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
-                Plotly.newPlot(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
-                scaled_cov_plot.on("plotly_click", coverage_plot_click)
-            })
+			\$.getJSON("report_data/gene_track_" + chrom + ".json", function(exons) {
+	            \$.getJSON("report_data/" + chrom + ".json", function(json) {
+	                scaled_cov_plot_data = json
+					const x_values = [];
+					const y_values = [];
+					const text_values = [];
+					let offset = -0.25
+					for (var i = 0; i < exons.length; i += 2) {
+
+						x_values.push(Number(exons[i]))
+						x_values.push(Number(exons[i + 1]))
+						x_values.push(NaN)
+
+						y_values.push(offset)
+						y_values.push(offset)
+						y_values.push(NaN)
+
+						text_values.push(Number(exons[i]))
+						text_values.push(Number(exons[i + 1]))
+						text_values.push(NaN)
+
+					}
+					var exon_trace = {
+						x: x_values,
+						y: y_values,
+						text: text_values,
+						type: "scattergl",
+						connectgaps: false,
+						hoverinfo: 'text',
+						showlegend: false,
+						line: {
+							width: 10,
+							color: '#444',
+						},
+					}
+					scaled_cov_plot_data.push(exon_trace)
+	                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
+	                Plotly.newPlot(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
+	                scaled_cov_plot.on("plotly_click", coverage_plot_click)
+	            })
+			})
         }
 
         jQuery('#chrom_selector').on("change", function() {
@@ -635,6 +685,28 @@ pca_div = """
         </div>
 """
 
+def merge_intervals(intervals):
+    sorted_intervals = sorted(intervals, key=lambda i: i[0])
+    merged = list()
+    for higher in sorted_intervals:
+        if not merged:
+            merged.append(higher)
+        else:
+            lower = merged[-1]
+            # merge bookends
+            if higher[0] - lower[1] == 1:
+                # update existing entry
+                merged[-1] = (lower[0], higher[1])
+            elif higher[0] <= lower[1]:
+                upper_bound = max(lower[1], higher[1])
+                # update existing entry
+                merged[-1] = (lower[0], upper_bound)
+            # non-overlapping
+            else:
+                merged.append(higher)
+    return merged
+
+
 sequence_count_files = "$sequence_count".split(" ")
 variant_count_files = "$variant_count".split(" ")
 square_vcf_file = "$vcf"
@@ -643,6 +715,7 @@ indexcov_roc_file = "$rocfile"
 svvcf_html_file = "$variant_html"
 bed_file = "$bedfile"
 sex_chroms = "$sexchroms".split(",")
+gff_file = "$gff"
 
 # building the sample summary table
 ## parse counts
@@ -821,6 +894,23 @@ for chrom in allowable:
                 trace["type"] = "scatter"
             traces.append(trace)
         print(json.dumps(traces), file=fh)
+# add the gene track data for the coverage plots
+with gzopen(gff_file) as fh:
+    for chrom, chrom_group in groupby(fh, key=lambda i: i.partition("\t")[0].strip("chr")):
+        if not chrom in allowable:
+            continue
+        exons = list()
+        for line in chrom_group:
+            if line.startswith("#"):
+                continue
+            toks = line.strip().split("\t")
+            if toks[2] != "exon":
+                continue
+            exons.append([int(toks[3]), int(toks[4])])
+        if exons:
+            merged_exons = merge_intervals(exons)
+            with open("gene_track_%s.json" % chrom, "w") as ofh:
+                print(json.dumps(list(chain.from_iterable(merged_exons))), file=ofh)
 
 # build the variant summary plots
 var_samples = []

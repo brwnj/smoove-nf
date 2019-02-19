@@ -198,6 +198,7 @@ process build_report {
     file rocfile from roc
     file variant_html from svvcf
     file bedfile from coverage_bed
+    file gff
 
     output:
     file("smoove-nf.html")
