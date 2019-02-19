@@ -384,7 +384,7 @@ html = """
                 </div>
             </div>
             <div class="col-12" id="cov_plot"></div>
-            <div class="col-12" id="scaled_cov_plot"</div>
+            <div class="col-12" id="scaled_cov_plot"></div>
         </div>
 
         <script>
