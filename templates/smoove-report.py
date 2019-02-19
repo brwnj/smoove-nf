@@ -494,7 +494,10 @@ html = """
 
             for (var i = 0; i < scaled_cov_plot_data.length; i++) {
                 // de-select traces
-                scaled_cov_plot_data[i].marker.color = cov_color
+                try {
+                    scaled_cov_plot_data[i].marker.color = cov_color
+                }
+                catch (err) {}
                 if (scaled_cov_plot_data[i].text == sample_id) {
                     scaled_cov_plot_data[i].marker.color = 'rgb(255,99,71)'
                 }
