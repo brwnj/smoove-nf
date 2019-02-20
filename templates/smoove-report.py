@@ -41,6 +41,11 @@ html = """
 	table.dataTable.table-sm .sorting:before, table.dataTable.table-sm .sorting_asc:before, table.dataTable.table-sm .sorting_desc:before {
 	    right: 1.15em;
 	}
+    .disabled_div {
+		pointer-events: none;
+		background-color: rgb(0,0,0,.2);
+		opacity: 0.4;
+	}
     </style>
 </head>
 <body>
@@ -478,12 +483,14 @@ html = """
 	                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
 	                Plotly.react(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
 	                scaled_cov_plot.on("plotly_click", coverage_plot_click)
+                    \$("#scaled_cov_plot").removeClass("disabled_div")
 	            })
 			})
         }
 
         jQuery('#chrom_selector').on("change", function() {
             var chrom = \$('#chrom_selector input:radio:checked').data('name')
+            \$("#scaled_cov_plot").addClass("disabled_div")
             build_coverage_by_percent_plot(chrom)
             build_coverage_by_position_plot(chrom)
         })
