@@ -37,6 +37,25 @@ Logs and output of various steps are aggregated and summarized into one report w
 
 **Interactive example:** https://brwnj.github.io/smoove-nf/
 
+Cumulative chromosome coverage is available as static images in the indexcov results. However, if you want to view them in your local report, start a server in the results directory in one of several ways. One way is to use PHP:
+
+```
+cd $outdir
+php -S localhost:8888
+```
+
+Then navigate your brower to localhost:8888/smoove-nf.html.
+
+Can can be used as an alternate to PHP like:
+
+```
+cd $outdir
+# python 3
+python -m "http.server"
+# python 2
+# python -m SimpleHTTPServer
+```
+
 ## Usage
 
 A Docker container is maintained in parallel with this workflow (https://hub.docker.com/r/brentp/smoove) and will be pulled by Nextflow before data processing begins. There's no need to download and install dependencies outside of Docker or Singularity and [Nextflow](https://www.nextflow.io/).
