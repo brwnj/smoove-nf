@@ -446,7 +446,14 @@ html = """
         function build_coverage_by_position_plot(chrom) {
 			\$.getJSON("report_data/gene_track_" + chrom + ".json", function(exons) {
 	            \$.getJSON("report_data/" + chrom + ".json", function(json) {
-	                scaled_cov_plot_data = json
+
+                    var scaled_cov_x_arr = json[0]
+                    scaled_cov_plot_data = json.slice(1)
+                    // add in x since we're limiting the size of these json objects
+                    for (var i = 0; i < scaled_cov_plot_data.length; i += 1) {
+                        scaled_cov_plot_data[i]["x"] = scaled_cov_x_arr
+                    }
+
 					const x_values = [];
 					const y_values = [];
 					const text_values = [];
@@ -890,9 +897,9 @@ with gzip.open(bed_file, "rt") as fh:
 for chrom in allowable:
     with open("%s.json" % chrom, "w") as fh:
         traces = list()
+        traces.append(data[chrom]["x"])
         for i, sample in enumerate(sample_list):
             trace = dict(
-                x=data[chrom]["x"],
                 y=data[chrom][sample],
                 hoverinfo="text",
                 type="scattergl",
@@ -907,25 +914,26 @@ for chrom in allowable:
         print(json.dumps(traces), file=fh)
 # add the gene track data for the coverage plots
 with gzopen(gff_file) as fh:
+    name_re = re.compile(r"Name=([^;]*)")
     for chrom, chrom_group in groupby(fh, key=lambda i: i.partition("\t")[0].strip("chr")):
-        name_re = re.compile(r"gene_name=([^;]*)")
         if not chrom in allowable:
             continue
-        exons = list()
+        genes = list()
         for line in chrom_group:
             if line.startswith("#"):
                 continue
             toks = line.strip().split("\t")
-            if toks[2] != "exon":
+            if toks[2] != "gene":
                 continue
-            exons.append([int(toks[3]), int(toks[4]), [name_re.findall(toks[8])[0]]])
-        if exons:
-            merged_exons = merge_intervals(exons)
+            genes.append([int(toks[3]), int(toks[4]), [name_re.findall(toks[8])[0]]])
+        if genes:
+            # merge overlapping genes
+            merged_genes = merge_intervals(genes)
             # update gene lists to semi-colon delimited string
-            for interval in merged_exons:
+            for interval in merged_genes:
                 interval[2] = ";".join(set(interval[2]))
             with open("gene_track_%s.json" % chrom, "w") as ofh:
-                print(json.dumps(list(chain.from_iterable(merged_exons))), file=ofh)
+                print(json.dumps(list(chain.from_iterable(merged_genes))), file=ofh)
 
 # build the variant summary plots
 var_samples = []
