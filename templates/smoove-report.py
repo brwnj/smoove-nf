@@ -387,7 +387,7 @@ html = """
             <div class="col-12 pt-3 pb-4">
                  <div id="chrom_selector" class="btn-group btn-group-toggle d-flex justify-content-center flex-wrap" data-toggle="buttons">
                       <div class="input-group-prepend">
-                          <span class="input-group-text" id="basic-addon1">Chromosome:</span>
+                          <span class="input-group-text">Chromosome:</span>
                       </div>
                       [CHROM_BUTTONS]
                 </div>
