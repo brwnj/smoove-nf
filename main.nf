@@ -63,7 +63,7 @@ process smoove_call {
     publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
-    memory { 8.GB * task.attempt }
+    memory { 16.GB * task.attempt }
     errorStrategy { task.attempt == 1 ? 'retry' : 'ignore' }
     cache 'lenient'
 
@@ -89,7 +89,7 @@ process smoove_call {
 
 process smoove_merge {
     publishDir path: "$outdir/smoove-merged", mode: "copy"
-    memory 15.GB
+    memory 16.GB
     cache 'deep'
 
     input:
@@ -111,6 +111,7 @@ process smoove_genotype {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
     errorStrategy { task.attempt == 1 ? 'retry' : 'terminate' }
+    memory 16.GB
     cache 'lenient'
 
     input:
@@ -139,7 +140,7 @@ process smoove_square {
     publishDir path: "$outdir/smoove-squared", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/bpbio", mode: "copy", pattern: "*.html"
     cpus 3
-    memory 45.GB
+    memory 64.GB
     cache 'deep'
 
     input:
@@ -164,6 +165,7 @@ process smoove_square {
 
 process run_indexcov {
     publishDir path: "$outdir/indexcov", mode: "copy"
+    memory 4.GB
     cache 'deep'
 
     input:
