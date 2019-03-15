@@ -878,7 +878,7 @@ index_cov_output = "{dir}/indexcov/index.html".format(dir=output_dir).replace("s
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
 
 # grab the sample metadata
-sample_metadata = parse_sample_metadata(metadata_file, sample_column)
+sample_meta = parse_sample_metadata(metadata_file, sample_column)
 
 # build the chromosome coverage plots for 'by percentage'
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
