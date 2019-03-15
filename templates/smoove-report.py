@@ -9,6 +9,11 @@ import re
 
 from collections import defaultdict
 from itertools import chain, groupby
+try:
+    from itertools import ifilterfalse as filterfalse
+except ImportError:
+    from itertools import filterfalse
+
 
 gzopen = lambda f: gzip.open(f, "rt") if f.endswith(".gz") else open(f)
 
@@ -703,6 +708,25 @@ pca_div = """
         </div>
 """
 
+
+def parse_sample_metadata(filename, col):
+    metadata = dict()
+    if filename:
+        with open(filename) as fh:
+            cols = fh.readline()
+            cols = cols.strip().split("\t")
+            if col in cols:
+                cols.pop(cols.index(col))
+                fh.seek(0)
+                reader = csv.DictReader(fh, delimiter="\t")
+                for row in reader:
+                    fmt = []
+                    for c in cols:
+                        fmt.append("{name}: {value}".format(name=c, value=row[c]))
+                    metadata[row[col]] = "<br>".join(fmt)
+    return metadata
+
+
 def merge_intervals(intervals):
     sorted_intervals = sorted(intervals, key=lambda i: i[0])
     merged = list()
@@ -734,6 +758,8 @@ svvcf_html_file = "$variant_html"
 bed_file = "$bedfile"
 sex_chroms = "$sexchroms".split(",")
 gff_file = "$gff"
+metadata_file = "$metadata"
+sample_column = "$samplecol"
 
 # building the sample summary table
 ## parse counts
@@ -847,8 +873,12 @@ else:
 html = html.replace("[PCA_DIV]", pca_div)
 
 # fixing the file link to indexcov results
-index_cov_output = "$outdir/indexcov/index.html".replace("s3://", "https://s3.amazonaws.com/")
+output_dir = "$outdir".rstrip("/")
+index_cov_output = "{dir}/indexcov/index.html".format(dir=output_dir).replace("s3://", "https://s3.amazonaws.com/")
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
+
+# grab the sample metadata
+sample_metadata = parse_sample_metadata(metadata_file, sample_column)
 
 # build the chromosome coverage plots for 'by percentage'
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
@@ -876,7 +906,7 @@ for chrom in allowable:
             buttons += '<label class="btn btn-secondary"><input type="radio" name="options" data-name="{chrom}" autocomplete="off"> {chrom} </label>'.format(chrom=chrom)
         trace_data = "["
         for sample in sample_list:
-            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text',mode:'lines',text:'{sample}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample)
+            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text+name',mode:'lines',text:'{sample}',name:'{name}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample, name="" if sample not in sample_meta else sample_meta[sample])
         trace_data += "]"
     cov_data += "'{chrom}': {trace},".format(chrom=chrom, trace=trace_data)
 cov_data += "}"
@@ -885,7 +915,7 @@ html = html.replace("[CHROM_DATA]", cov_data)
 
 # build the chromosome coverage plots for 'by position'
 with gzip.open(bed_file, "rt") as fh:
-    reader = csv.DictReader(fh, delimiter="\t")
+    reader = csv.DictReader(fh, delimiter="\\t")
     data = defaultdict(lambda: defaultdict(list))
     for row in reader:
         chrom = row["#chrom"].strip("chr")
@@ -901,10 +931,11 @@ for chrom in allowable:
         for i, sample in enumerate(sample_list):
             trace = dict(
                 y=data[chrom][sample],
-                hoverinfo="text",
+                hoverinfo="text+name",
                 type="scattergl",
                 mode="lines",
                 text=sample,
+                name="" if not sample in sample_meta else sample_meta[sample],
                 marker={"color":"rgba(108,117,125,0.3)"}
             )
             if i < 5:
@@ -914,8 +945,9 @@ for chrom in allowable:
         print(json.dumps(traces), file=fh)
 # add the gene track data for the coverage plots
 with gzopen(gff_file) as fh:
+    cleaned = filterfalse(lambda i: i[0] == "#", fh)
     name_re = re.compile(r"Name=([^;]*)")
-    for chrom, chrom_group in groupby(fh, key=lambda i: i.partition("\t")[0].strip("chr")):
+    for chrom, chrom_group in groupby(cleaned, key=lambda i: i.partition("\t")[0].strip("chr")):
         if not chrom in allowable:
             continue
         genes = list()

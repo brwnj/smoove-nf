@@ -21,6 +21,8 @@ sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
+metadata = params.metadata ?: false
+samplecol = params.samplecol ?: false
 
 log.info("\n")
 log.info("Project                              : ${project}")
@@ -201,6 +203,7 @@ process build_report {
     file variant_html from svvcf
     file bedfile from coverage_bed
     file gff
+    file metadata
 
     output:
     file("smoove-nf.html")
