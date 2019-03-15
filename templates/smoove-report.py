@@ -579,7 +579,7 @@ html = """
 			for (var i = 0; i < meta_header.length; i++) {
 				cols.push({title: meta_header[i], data: meta_header[i]})
 			}
-			var metadata_table = $('#metadata_table').DataTable({
+			var metadata_table = \$('#metadata_table').DataTable({
 				data: metadata,
 				columns: cols,
 				scrollY: '300px',
