@@ -16,7 +16,17 @@ except ImportError:
 
 
 gzopen = lambda f: gzip.open(f, "rt") if f.endswith(".gz") else open(f)
-
+sequence_count_files = "$sequence_count".split(" ")
+variant_count_files = "$variant_count".split(" ")
+square_vcf_file = "$vcf"
+ped_file = "$pedfile"
+indexcov_roc_file = "$rocfile"
+svvcf_html_file = "$variant_html"
+bed_file = "$bedfile"
+sex_chroms = "$sexchroms".split(",")
+gff_file = "$gff"
+metadata_file = "$metadata"
+sample_column = "$samplecol"
 
 html = """
 <!DOCTYPE html>
@@ -51,6 +61,10 @@ html = """
 		background-color: rgb(0,0,0,.2);
 		opacity: 0.4;
 	}
+    .selected {
+	  background-color: rgba(161,234,247,0.5) !important;
+	}
+
     </style>
 </head>
 <body>
@@ -399,6 +413,9 @@ html = """
             </div>
             <div class="col-12" id="cov_plot"></div>
             <div class="col-12" id="scaled_cov_plot"></div>
+            <div class="col-12 pb-3">
+				<table id="metadata_table" class="table table-hover table-sm pb-3" width="100%"></table>
+			</div>
         </div>
 
         <script>
@@ -502,6 +519,11 @@ html = """
 
         jQuery('#chrom_selector').on("change", function() {
             var chrom = \$('#chrom_selector input:radio:checked').data('name')
+			if (metadata) {
+				var tables = \$('.dataTable').DataTable()
+				var table = tables.table('#metadata_table')
+				table.search( '' ).columns().search( '' ).draw();
+			}
             \$("#scaled_cov_plot").addClass("disabled_div")
             build_coverage_by_percent_plot(chrom)
             build_coverage_by_position_plot(chrom)
@@ -510,6 +532,21 @@ html = """
         function coverage_plot_click(click_data) {
             var local_plot_data = click_data.points[0].data
             var sample_id = local_plot_data.text
+
+            if (metadata){
+				var tables = \$('.dataTable').DataTable()
+				var table = tables.table('#metadata_table')
+				// remove selection
+				table.\$('tr.selected').removeClass('selected');
+				// run the search
+				table.search(sample_id).draw()
+				// highlight the selected sample within the search results
+				table.rows().every(function(row_index, table_loop, row_loop) {
+					if (sample_id == this.data().sample_id) {
+						table.rows([row_index]).nodes().to\$().addClass('selected')
+					}
+				})
+			}
 
             for (var i = 0; i < scaled_cov_plot_data.length; i++) {
                 // de-select traces
@@ -534,6 +571,21 @@ html = """
             Plotly.redraw("cov_plot")
             Plotly.redraw("scaled_cov_plot")
         }
+
+        const meta_header = METADATA_HEADER;
+        const metadata = METADATA;
+        if (metadata) {
+			cols = []
+			for (var i = 0; i < meta_header.length; i++) {
+				cols.push({title: meta_header[i], data: meta_header[i]})
+			}
+			var metadata_table = $('#metadata_table').DataTable({
+				data: metadata,
+				columns: cols,
+				scrollY: '300px',
+				paging: false,
+			})
+		}
         </script>
 
         <h3>Full indexcov Results</h3>
@@ -710,21 +762,20 @@ pca_div = """
 
 
 def parse_sample_metadata(filename, col):
-    metadata = dict()
+    sample_metadata = list()
+    cols = list()
     if filename:
         with open(filename) as fh:
             cols = fh.readline()
             cols = cols.strip().split("\t")
             if col in cols:
-                cols.pop(cols.index(col))
                 fh.seek(0)
                 reader = csv.DictReader(fh, delimiter="\t")
                 for row in reader:
-                    fmt = []
-                    for c in cols:
-                        fmt.append("{name}: {value}".format(name=c, value=row[c]))
-                    metadata[row[col]] = "<br>".join(fmt)
-    return metadata
+                    if 'sample_id' not in row:
+                        row['sample_id'] = row[col]
+                    sample_metadata.append(row)
+    return [json.dumps(cols), json.dumps(sample_metadata)]
 
 
 def merge_intervals(intervals):
@@ -748,18 +799,6 @@ def merge_intervals(intervals):
                 merged.append(higher)
     return merged
 
-
-sequence_count_files = "$sequence_count".split(" ")
-variant_count_files = "$variant_count".split(" ")
-square_vcf_file = "$vcf"
-ped_file = "$pedfile"
-indexcov_roc_file = "$rocfile"
-svvcf_html_file = "$variant_html"
-bed_file = "$bedfile"
-sex_chroms = "$sexchroms".split(",")
-gff_file = "$gff"
-metadata_file = "$metadata"
-sample_column = "$samplecol"
 
 # building the sample summary table
 ## parse counts
@@ -878,7 +917,9 @@ index_cov_output = "{dir}/indexcov/index.html".format(dir=output_dir).replace("s
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
 
 # grab the sample metadata
-sample_meta = parse_sample_metadata(metadata_file, sample_column)
+meta_header, metadata = parse_sample_metadata(metadata_file, sample_column)
+html = html.replace("METADATA_HEADER", meta_header)
+html = html.replace("METADATA", metadata)
 
 # build the chromosome coverage plots for 'by percentage'
 allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
@@ -906,7 +947,7 @@ for chrom in allowable:
             buttons += '<label class="btn btn-secondary"><input type="radio" name="options" data-name="{chrom}" autocomplete="off"> {chrom} </label>'.format(chrom=chrom)
         trace_data = "["
         for sample in sample_list:
-            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text+name',mode:'lines',text:'{sample}',name:'{name}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample, name="" if sample not in sample_meta else sample_meta[sample])
+            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text',mode:'lines',text:'{sample}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample)
         trace_data += "]"
     cov_data += "'{chrom}': {trace},".format(chrom=chrom, trace=trace_data)
 cov_data += "}"
@@ -931,11 +972,10 @@ for chrom in allowable:
         for i, sample in enumerate(sample_list):
             trace = dict(
                 y=data[chrom][sample],
-                hoverinfo="text+name",
+                hoverinfo="text",
                 type="scattergl",
                 mode="lines",
                 text=sample,
-                name="" if not sample in sample_meta else sample_meta[sample],
                 marker={"color":"rgba(108,117,125,0.3)"}
             )
             if i < 5:

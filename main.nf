@@ -21,7 +21,7 @@ sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
-metadata = params.metadata ?: false
+metadata = file(params.metadata) ?: false
 samplecol = params.samplecol ?: false
 
 log.info("\n")
