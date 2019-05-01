@@ -46,7 +46,7 @@ php -S localhost:8888
 
 Then navigate your brower to localhost:8888/smoove-nf.html.
 
-Can can be used as an alternate to PHP like:
+Python can be used as an alternate to PHP like:
 
 ```
 cd $outdir
@@ -79,11 +79,12 @@ present.
 + `--gff`
 	+ Annotation GFF used in `smoove annotate`.
 	+ GRCh38 reference is available via [Ensembl](ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz)
-+ `--outdir`
-	+ The base results directory for output.
 
 ### Optional parameters
 
++ `--outdir`
+	+ The base results directory for output.
+	+ **Default:** './results'
 + `--excludechroms`
 	+ Chromosomes to exclude during `smoove call`.
 	+ You should escape '$', e.g. `"hs37d5,~:,~^GL,~decoy,~random\$,~chrUn,~_alt\$"`
@@ -97,8 +98,10 @@ present.
 	+ tab-delimited text file with a header
 	+ these metadata are added to the report
 	+ requires the use of `--samplecol`
+	+ **Default:** false
 + `--samplecol`
 	+ specifies the header label for the sample IDs within `--metadata` table
+	+ **Default:** sample_id
 
 ## Updating
 
