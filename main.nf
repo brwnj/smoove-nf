@@ -22,10 +22,10 @@ sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 metadata = file(params.metadata) ?: false
-samplecol = params.samplecol ?: false
+samplecol = params.samplecol ?: 'sample_id'
 
 log.info("\n")
-log.info("Project                              : ${project}")
+log.info("Project            (--project)       : ${project}")
 log.info("Excluded regions   (--bed)           : ${params.bed}")
 if( params.excludechroms ) {
 log.info("Excluded chroms    (--excludechroms) : ${params.excludechroms}")
