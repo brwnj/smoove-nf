@@ -36,11 +36,11 @@ html = """
     <meta name="author" content="Joe Brown" />
     <title>smoove-nf</title>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
     <script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style type="text/css">
     .container {max-width: 90%}
@@ -58,7 +58,6 @@ html = """
 	}
     .disabled_div {
 		pointer-events: none;
-		background-color: rgb(0,0,0,.2);
 		opacity: 0.4;
 	}
     .selected {
@@ -522,7 +521,7 @@ html = """
 			if (metadata) {
 				var tables = \$('.dataTable').DataTable()
 				var table = tables.table('#metadata_table')
-				table.search( '' ).columns().search( '' ).draw();
+                table.\$('tr.selected').removeClass('selected')
 			}
             \$("#scaled_cov_plot").addClass("disabled_div")
             build_coverage_by_percent_plot(chrom)
@@ -533,7 +532,7 @@ html = """
             var local_plot_data = click_data.points[0].data
             var sample_id = local_plot_data.text
 
-            if (metadata){
+            if (metadata) {
 				var tables = \$('.dataTable').DataTable()
 				var table = tables.table('#metadata_table')
 				// remove selection
