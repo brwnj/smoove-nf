@@ -66,7 +66,7 @@ process smoove_call {
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
     memory { 16.GB * task.attempt }
-    errorStrategy { task.attempt == 1 ? 'retry' : 'ignore' }
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
     cache 'lenient'
 
     input:
@@ -112,7 +112,7 @@ process smoove_merge {
 process smoove_genotype {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
-    errorStrategy { task.attempt == 1 ? 'retry' : 'terminate' }
+    errorStrategy { task.attempt < 3 ? 'retry' : 'terminate' }
     memory 16.GB
     cache 'lenient'
 
