@@ -94,14 +94,6 @@ present.
 + `--sexchroms`
 	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`.
 	+ **Default:** 'X,Y'
-+ `--metadata`
-	+ tab-delimited text file with a header
-	+ these metadata are added to the report
-	+ requires the use of `--samplecol`
-	+ **Default:** false
-+ `--samplecol`
-	+ specifies the header label for the sample IDs within `--metadata` table
-	+ **Default:** sample_id
 
 ## Updating
 

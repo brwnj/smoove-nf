@@ -167,7 +167,7 @@ process smoove_square {
 
 process run_indexcov {
     publishDir path: "$outdir/indexcov", mode: "copy"
-    memory 4.GB
+    memory 8.GB
     cache 'deep'
 
     input:
@@ -189,9 +189,26 @@ process run_indexcov {
     """
 }
 
+process build_covviz_report {
+    publishDir path: "$outdir", mode: "copy", pattern: "*.html"
+    container 'jupyter/scipy-notebook:7d427e7a4dde'
+    cache 'lenient'
+
+    input:
+    file pedfile from ped
+    file rocfile from roc
+    file bedfile from coverage_bed
+    file gff
+
+    output:
+    file("covviz_report.html")
+
+    script:
+    template 'parse_indexcov.py'
+}
+
 process build_report {
     publishDir path: "$outdir", mode: "copy", pattern: "*.html", overwrite: true
-    publishDir path: "$outdir/report_data", mode: "copy", pattern: "*.json"
     cache false
 
     input:
@@ -199,15 +216,10 @@ process build_report {
     file variant_count from variant_counts.collect()
     file vcf from square_vcf
     file pedfile from ped
-    file rocfile from roc
     file variant_html from svvcf
-    file bedfile from coverage_bed
-    file gff
-    file metadata
 
     output:
     file("smoove-nf.html")
-    file("*.json")
 
     script:
     template 'smoove-report.py'

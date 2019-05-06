@@ -20,13 +20,8 @@ sequence_count_files = "$sequence_count".split(" ")
 variant_count_files = "$variant_count".split(" ")
 square_vcf_file = "$vcf"
 ped_file = "$pedfile"
-indexcov_roc_file = "$rocfile"
 svvcf_html_file = "$variant_html"
-bed_file = "$bedfile"
 sex_chroms = "$sexchroms".split(",")
-gff_file = "$gff"
-metadata_file = "$metadata"
-sample_column = "$samplecol"
 
 html = """
 <!DOCTYPE html>
@@ -43,27 +38,13 @@ html = """
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style type="text/css">
-    .container {max-width: 90%}
-    h1:before {
-        height: 70px;
-        content: "";
-        display:block;
-    }
-    body {
-        position: relative;
-    }
+    .container { max-width: 90% }
+    h1:before { height: 70px; content: ""; display:block; }
+    body { position: relative; }
 	/* fix asc/desc arrow positioning */
-	table.dataTable.table-sm .sorting:before, table.dataTable.table-sm .sorting_asc:before, table.dataTable.table-sm .sorting_desc:before {
-	    right: 1.15em;
-	}
-    .disabled_div {
-		pointer-events: none;
-		opacity: 0.4;
-	}
-    .selected {
-	  background-color: rgba(161,234,247,0.5) !important;
-	}
-
+	table.dataTable.table-sm .sorting:before, table.dataTable.table-sm .sorting_asc:before, table.dataTable.table-sm .sorting_desc:before { right: 1.15em; }
+    .disabled_div { pointer-events: none; opacity: 0.4; }
+    .selected { background-color: rgba(161,234,247,0.5) !important; }
     </style>
 </head>
 <body>
@@ -399,194 +380,6 @@ html = """
 
         [PCA_DIV]
 
-        <h3>Cumulative chromosome coverage</h3>
-        <p>Per chromosome coverage (ROC) plots show how much of the genome is covered at a given (scaled) depth. Shorter curves are indicative of increased low coverage regions. [<a href="https://github.com/brentp/goleft/blob/master/docs/indexcov/help-depth.md">docs</a>]</p>
-        <div class="row">
-            <div class="col-12 pt-3 pb-4">
-                 <div id="chrom_selector" class="btn-group btn-group-toggle d-flex justify-content-center flex-wrap" data-toggle="buttons">
-                      <div class="input-group-prepend">
-                          <span class="input-group-text">Chromosome:</span>
-                      </div>
-                      [CHROM_BUTTONS]
-                </div>
-            </div>
-            <div class="col-12" id="cov_plot"></div>
-            <div class="col-12" id="scaled_cov_plot"></div>
-            <div class="col-12 pb-3">
-				<table id="metadata_table" class="table table-hover table-sm pb-3" width="100%"></table>
-			</div>
-        </div>
-
-        <script>
-        var cov_color = 'rgba(108,117,125,0.3)'
-        var cov_layout = {
-            title: "",
-            margin: {t: 10, b: 40},
-            height: 350,
-            xaxis: {title: "Scaled Coverage", showgrid: false, range: [0, 1.5]},
-            yaxis: {title: "Proportion of Regions Covered", range: [0, 1.]},
-            hovermode: "closest",
-            showlegend: false,
-        }
-        var scaled_cov_layout = {
-            title: "",
-            margin: {t: 10, b: 40},
-            height: 450,
-            xaxis: {
-                title: "Position",
-                rangeslider: {},
-                showgrid: false,
-				showlines: false,
-				// showticklabels: false,
-				// ticks: '',
-				zeroline: false,
-            },
-            yaxis: {
-				title: "Scaled Coverage",
-				fixedrange: true,
-				domain: [0, 3],
-				showgrid: true,
-				showticklabels: true,
-				tickvals: [0, 1, 2, 3],
-				zeroline: false,
-			},
-            hovermode: "closest",
-            showlegend: false,
-        }
-        var cov_data = [CHROM_DATA]
-        var cov_plot_data = cov_data[\$('#chrom_selector input:radio:checked').data('name')]
-        var scaled_cov_plot_data;
-
-        function build_coverage_by_percent_plot(chrom) {
-            cov_plot_data = cov_data[chrom]
-            var cov_plot = document.getElementById("cov_plot")
-            Plotly.react(cov_plot, cov_plot_data, cov_layout)
-            cov_plot.on("plotly_click", coverage_plot_click)
-        }
-
-        function build_coverage_by_position_plot(chrom) {
-			\$.getJSON("report_data/gene_track_" + chrom + ".json", function(exons) {
-	            \$.getJSON("report_data/" + chrom + ".json", function(json) {
-
-                    var scaled_cov_x_arr = json[0]
-                    scaled_cov_plot_data = json.slice(1)
-                    // add in x since we're limiting the size of these json objects
-                    for (var i = 0; i < scaled_cov_plot_data.length; i += 1) {
-                        scaled_cov_plot_data[i]["x"] = scaled_cov_x_arr
-                    }
-
-					const x_values = [];
-					const y_values = [];
-					const text_values = [];
-					let offset = -0.25
-					for (var i = 0; i < exons.length; i += 3) {
-
-						x_values.push(Number(exons[i]))
-						x_values.push(Number(exons[i + 1]))
-						x_values.push(NaN)
-
-						y_values.push(offset)
-						y_values.push(offset)
-						y_values.push(NaN)
-
-						text_values.push(exons[i + 2])
-						text_values.push(exons[i + 2])
-						text_values.push(NaN)
-
-					}
-					var exon_trace = {
-						x: x_values,
-						y: y_values,
-						text: text_values,
-						type: "scattergl",
-						connectgaps: false,
-						hoverinfo: 'text',
-						showlegend: false,
-						line: {
-							width: 10,
-							color: '#444',
-						},
-					}
-					scaled_cov_plot_data.push(exon_trace)
-	                var scaled_cov_plot = document.getElementById("scaled_cov_plot")
-	                Plotly.react(scaled_cov_plot, scaled_cov_plot_data, scaled_cov_layout)
-	                scaled_cov_plot.on("plotly_click", coverage_plot_click)
-                    \$("#scaled_cov_plot").removeClass("disabled_div")
-	            })
-			})
-        }
-
-        jQuery('#chrom_selector').on("change", function() {
-            var chrom = \$('#chrom_selector input:radio:checked').data('name')
-			if (metadata) {
-				var tables = \$('.dataTable').DataTable()
-				var table = tables.table('#metadata_table')
-                table.\$('tr.selected').removeClass('selected')
-			}
-            \$("#scaled_cov_plot").addClass("disabled_div")
-            build_coverage_by_percent_plot(chrom)
-            build_coverage_by_position_plot(chrom)
-        })
-
-        function coverage_plot_click(click_data) {
-            var local_plot_data = click_data.points[0].data
-            var sample_id = local_plot_data.text
-
-            if (metadata) {
-				var tables = \$('.dataTable').DataTable()
-				var table = tables.table('#metadata_table')
-				// remove selection
-				table.\$('tr.selected').removeClass('selected');
-				// run the search
-				table.search(sample_id).draw()
-				// highlight the selected sample within the search results
-				table.rows().every(function(row_index, table_loop, row_loop) {
-					if (sample_id == this.data().sample_id) {
-						table.rows([row_index]).nodes().to\$().addClass('selected')
-					}
-				})
-			}
-
-            for (var i = 0; i < scaled_cov_plot_data.length; i++) {
-                // de-select traces
-                try {
-                    scaled_cov_plot_data[i].marker.color = cov_color
-                }
-                catch (err) {}
-                if (scaled_cov_plot_data[i].text == sample_id) {
-                    scaled_cov_plot_data[i].marker.color = 'rgb(255,99,71)'
-                }
-            }
-
-            for (var i = 0; i < cov_plot_data.length; i++) {
-                // de-select traces
-                cov_plot_data[i].marker.color = cov_color
-                if (cov_plot_data[i].text == sample_id) {
-                    // set color based on trace index
-                    cov_plot_data[i].marker.color = 'rgb(255,99,71)'
-                }
-            }
-
-            Plotly.redraw("cov_plot")
-            Plotly.redraw("scaled_cov_plot")
-        }
-
-        const meta_header = METADATA_HEADER;
-        const metadata = METADATA;
-        if (metadata) {
-			cols = []
-			for (var i = 0; i < meta_header.length; i++) {
-				cols.push({title: meta_header[i], data: meta_header[i]})
-			}
-			var metadata_table = \$('#metadata_table').DataTable({
-				data: metadata,
-				columns: cols,
-				scrollY: '300px',
-				paging: false,
-			})
-		}
-        </script>
-
         <h3>Full indexcov Results</h3>
         <p>INDEXCOV_RESULT</p>
 
@@ -759,46 +552,6 @@ pca_div = """
         </div>
 """
 
-
-def parse_sample_metadata(filename, col):
-    sample_metadata = list()
-    cols = list()
-    if filename:
-        with open(filename) as fh:
-            cols = fh.readline()
-            cols = cols.strip().split("\t")
-            if col in cols:
-                fh.seek(0)
-                reader = csv.DictReader(fh, delimiter="\t")
-                for row in reader:
-                    if 'sample_id' not in row:
-                        row['sample_id'] = row[col]
-                    sample_metadata.append(row)
-    return [json.dumps(cols), json.dumps(sample_metadata)]
-
-
-def merge_intervals(intervals):
-    sorted_intervals = sorted(intervals, key=lambda i: i[0])
-    merged = list()
-    for higher in sorted_intervals:
-        if not merged:
-            merged.append(higher)
-        else:
-            lower = merged[-1]
-            # merge bookends
-            if higher[0] - lower[1] == 1:
-                # update existing entry
-                merged[-1] = [lower[0], higher[1], lower[2] + higher[2]]
-            elif higher[0] <= lower[1]:
-                upper_bound = max(lower[1], higher[1])
-                # update existing entry
-                merged[-1] = [lower[0], upper_bound, lower[2] + higher[2]]
-            # non-overlapping
-            else:
-                merged.append(higher)
-    return merged
-
-
 # building the sample summary table
 ## parse counts
 sample_counts = defaultdict(dict)
@@ -914,97 +667,6 @@ html = html.replace("[PCA_DIV]", pca_div)
 output_dir = "$outdir".rstrip("/")
 index_cov_output = "{dir}/indexcov/index.html".format(dir=output_dir).replace("s3://", "https://s3.amazonaws.com/")
 html = html.replace("INDEXCOV_RESULT", '<a href="{path}">{path}</a>'.format(path=index_cov_output))
-
-# grab the sample metadata
-meta_header, metadata = parse_sample_metadata(metadata_file, sample_column)
-html = html.replace("METADATA_HEADER", meta_header)
-html = html.replace("METADATA", metadata)
-
-# build the chromosome coverage plots for 'by percentage'
-allowable = ["{}".format(i) for i in list(range(1,23))] + ["X", "Y"]
-with open(indexcov_roc_file) as fh:
-    reader = csv.DictReader(fh, delimiter="\\t")
-    data = defaultdict(lambda: defaultdict(list))
-    for row in reader:
-        # header row is repeated at chromosome breaks
-        if row["#chrom"] == "#chrom":
-            continue
-        chrom = row["#chrom"].strip("chr")
-        if chrom not in allowable:
-            continue
-        data[chrom]["x"].append(row["cov"])
-        for sample in sample_list:
-            # KeyError here would be interesting
-            data[chrom][sample].append(row[sample])
-buttons = ""
-cov_data = "{"
-for chrom in allowable:
-    if chrom in data:
-        if not buttons:
-            buttons += '<label class="btn btn-secondary active"><input type="radio" name="options" data-name="{chrom}" autocomplete="off" checked> {chrom} </label>'.format(chrom=chrom)
-        else:
-            buttons += '<label class="btn btn-secondary"><input type="radio" name="options" data-name="{chrom}" autocomplete="off"> {chrom} </label>'.format(chrom=chrom)
-        trace_data = "["
-        for sample in sample_list:
-            trace_data += """{{x:[{x}],y:[{y}],hoverinfo:'text',mode:'lines',text:'{sample}',marker:{{ color:cov_color }}}},""".format(x=",".join(data[chrom]["x"]), y=",".join(data[chrom][sample]), sample=sample)
-        trace_data += "]"
-    cov_data += "'{chrom}': {trace},".format(chrom=chrom, trace=trace_data)
-cov_data += "}"
-html = html.replace("[CHROM_BUTTONS]", buttons)
-html = html.replace("[CHROM_DATA]", cov_data)
-
-# build the chromosome coverage plots for 'by position'
-with gzip.open(bed_file, "rt") as fh:
-    reader = csv.DictReader(fh, delimiter="\\t")
-    data = defaultdict(lambda: defaultdict(list))
-    for row in reader:
-        chrom = row["#chrom"].strip("chr")
-        if chrom not in allowable:
-            continue
-        data[chrom]["x"].append(int(row["start"]))
-        for sample in sample_list:
-            data[chrom][sample].append(float(row[sample]) if float(row[sample]) < 3 else 3)
-for chrom in allowable:
-    with open("%s.json" % chrom, "w") as fh:
-        traces = list()
-        traces.append(data[chrom]["x"])
-        for i, sample in enumerate(sample_list):
-            trace = dict(
-                y=data[chrom][sample],
-                hoverinfo="text",
-                type="scattergl",
-                mode="lines",
-                text=sample,
-                marker={"color":"rgba(108,117,125,0.3)"}
-            )
-            if i < 5:
-                # ensures lines are in the range selection preview
-                trace["type"] = "scatter"
-            traces.append(trace)
-        print(json.dumps(traces), file=fh)
-# add the gene track data for the coverage plots
-with gzopen(gff_file) as fh:
-    cleaned = filterfalse(lambda i: i[0] == "#", fh)
-    name_re = re.compile(r"Name=([^;]*)")
-    for chrom, chrom_group in groupby(cleaned, key=lambda i: i.partition("\t")[0].strip("chr")):
-        if not chrom in allowable:
-            continue
-        genes = list()
-        for line in chrom_group:
-            if line.startswith("#"):
-                continue
-            toks = line.strip().split("\t")
-            if toks[2] != "gene":
-                continue
-            genes.append([int(toks[3]), int(toks[4]), [name_re.findall(toks[8])[0]]])
-        if genes:
-            # merge overlapping genes
-            merged_genes = merge_intervals(genes)
-            # update gene lists to semi-colon delimited string
-            for interval in merged_genes:
-                interval[2] = ";".join(set(interval[2]))
-            with open("gene_track_%s.json" % chrom, "w") as ofh:
-                print(json.dumps(list(chain.from_iterable(merged_genes))), file=ofh)
 
 # build the variant summary plots
 var_samples = []
