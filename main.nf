@@ -175,7 +175,7 @@ process run_indexcov {
     file("${project}*.roc") into roc
 
     script:
-    excludepatt = params. ? "--excludepatt \"${params.}\"" : ''
+    excludepatt = params.exclude ? "--excludepatt \"${params.exclude}\"" : ''
     """
     goleft indexcov --sex $sexchroms $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
