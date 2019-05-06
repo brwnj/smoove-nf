@@ -10,25 +10,18 @@ if( !params.outdir ) { exit 1, "--outdir is not defined" }
 params.gff = false
 if( !params.gff ) { exit 1, "--gff is not defined" }
 
-// optional
-params.excludechroms = false
-params.project = false
-params.sexchroms = false
-
 // variables
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
-metadata = file(params.metadata) ?: false
-samplecol = params.samplecol ?: 'sample_id'
 
 log.info("\n")
 log.info("Project            (--project)       : ${project}")
 log.info("Excluded regions   (--bed)           : ${params.bed}")
-if( params.excludechroms ) {
-log.info("Excluded chroms    (--excludechroms) : ${params.excludechroms}")
+if( params.exclude ) {
+log.info("Excluded chroms    (--exclude)       : ${params.exclude}")
 }
 log.info("Reference fasta    (--fasta)         : ${params.fasta}")
 log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
@@ -82,7 +75,7 @@ process smoove_call {
     file("${sample}-smoove-call.log") into sequence_counts
 
     script:
-    excludechroms = params.excludechroms ? "--excludechroms \"${params.excludechroms}\"" : ''
+    excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ''
     """
     smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam 2> ${sample}-smoove-call.log
     bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
@@ -182,7 +175,7 @@ process run_indexcov {
     file("${project}*.roc") into roc
 
     script:
-    excludepatt = params.excludechroms ? "--excludepatt \"${params.excludechroms}\"" : ''
+    excludepatt = params. ? "--excludepatt \"${params.}\"" : ''
     """
     goleft indexcov --sex $sexchroms $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .

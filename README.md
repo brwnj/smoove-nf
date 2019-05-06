@@ -85,15 +85,26 @@ present.
 + `--outdir`
 	+ The base results directory for output.
 	+ **Default:** './results'
-+ `--excludechroms`
-	+ Chromosomes to exclude during `smoove call`.
++ `--exclude`
+    + regular expression of chromosomes to skip
 	+ You should escape '$', e.g. `"hs37d5,~:,~^GL,~decoy,~random\$,~chrUn,~_alt\$"`
+    + default: "^GL|^hs|^chrEBV$|M$|MT$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d+$"
 + `--project`
 	+ Acts as the file prefix for merged and squared sites.
 	+ **Default:** 'sites'
 + `--sexchroms`
 	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`.
 	+ **Default:** 'X,Y'
++ `--zthreshold`
+    + a sample must greater than this many standard deviations in order to be found significant
+    + default: 3.5
++ `--distancethreshold`
+    + consecutive significant points must span this distance in order to pass this filter
+    + default: 150000
++ `--slop`
+    + leading and trailing segments added to significant regions to make them more visible
+    + default: 500000
+
 
 ## Updating
 
