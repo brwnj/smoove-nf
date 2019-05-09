@@ -4,6 +4,7 @@ from __future__ import print_function
 import csv
 import gzip
 import json
+import logging
 import os
 import re
 
@@ -15,6 +16,7 @@ except ImportError:
     from itertools import filterfalse
 
 
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 gzopen = lambda f: gzip.open(f, "rt") if f.endswith(".gz") else open(f)
 sequence_count_files = "$sequence_count".split(" ")
 variant_count_files = "$variant_count".split(" ")
@@ -556,6 +558,7 @@ pca_div = """
 ## parse counts
 sample_counts = defaultdict(dict)
 for count_file in sequence_count_files:
+    logging.info("Parsing sequence count file: %s" % count_file)
     sample = os.path.basename(count_file).partition("-smoove-call")[0]
     with open(count_file) as fh:
         # [smoove]: ([E]lumpy-filter) 2019/01/16 21:45:01 [lumpy_filter] extracted splits and discordants from 701835557 total aligned reads
@@ -568,8 +571,11 @@ for count_file in sequence_count_files:
                 sample_counts[sample]["called"] = "fail"
                 sample_counts[sample]["genotyped"] = "fail"
                 break
+    if "mapped" not in sample_counts[sample]:
+        logging.error("Counts could not be parsed for sample %s from counts file %s" % (sample, count_file))
 ## parse called
 for count_file in variant_count_files:
+    logging.info("Parsing variant count file: %s" % count_file)
     sample = os.path.basename(count_file).partition("-stats")[0]
     with open(count_file) as fh:
         for line in fh:
