@@ -605,9 +605,12 @@ with gzip.open(square_vcf_file, "rt") as fh:
             filtering_counts["disc_before"].append(disc_before)
             filtering_counts["split_after"].append(split_after)
             filtering_counts["disc_after"].append(disc_after)
+
+logging.info("Compiling sample stats for data table...")
 sample_list = sorted(sample_counts.keys())
 sample_summary_str = ""
 for sample in sample_list:
+    logging.info("Adding sample %s" % sample)
     counts = sample_counts[sample]
     sample_summary_str += "['{sample}', {mapped}, {variants}, {called}, {genotyped}],".format(sample=sample, mapped=counts["mapped"], variants=counts["variants"], called=counts["called"], genotyped=counts["genotyped"])
 html = html.replace("SAMPLE_SUMMARY", sample_summary_str)
