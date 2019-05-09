@@ -46,7 +46,7 @@ if( !gff.exists() ) { exit 1, "Missing annotations: ${gff}" }
 
 Channel
     .fromPath(params.bams, checkIfExists: true)
-    .map { file -> tuple(file.baseName.take(file.baseName.lastIndexOf('.')), file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
+    .map { file -> tuple(file.baseName, file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
     .into { call_bams; genotype_bams }
 
 Channel
