@@ -33,26 +33,9 @@ Using [indexcov](https://github.com/brentp/goleft/tree/master/indexcov), estimat
 
 #### Workflow report
 
-Logs and output of various steps are aggregated and summarized into one report written to `$outdir/smoove-nf.html`. Viewing the report without running a server will show all metrics except for cumulative chromosome coverage by position.
+Logs and output of various steps are aggregated and summarized into one report written to `$outdir/smoove-nf.html`.
 
-Cumulative chromosome coverage is available as static images in the indexcov results. However, if you want to view them in your local report, start a server in the results directory in one of several ways. One way is to use PHP:
-
-```
-cd $outdir
-php -S localhost:8888
-```
-
-Then navigate your brower to localhost:8888/smoove-nf.html.
-
-Python can be used as an alternate to PHP like:
-
-```
-cd $outdir
-# python 3
-python -m "http.server"
-# python 2
-# python -m SimpleHTTPServer
-```
+Cumulative chromosome coverage is available in `$outdir/covviz_report.html`.
 
 ## Usage
 
