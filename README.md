@@ -35,8 +35,6 @@ Using [indexcov](https://github.com/brentp/goleft/tree/master/indexcov), estimat
 
 Logs and output of various steps are aggregated and summarized into one report written to `$outdir/smoove-nf.html`. Viewing the report without running a server will show all metrics except for cumulative chromosome coverage by position.
 
-**Interactive example:** https://brwnj.github.io/smoove-nf/
-
 Cumulative chromosome coverage is available as static images in the indexcov results. However, if you want to view them in your local report, start a server in the results directory in one of several ways. One way is to use PHP:
 
 ```
@@ -61,7 +59,7 @@ python -m "http.server"
 A Docker container is maintained in parallel with this workflow (https://hub.docker.com/r/brentp/smoove) and will be pulled by Nextflow before data processing begins. There's no need to download and install dependencies outside of Docker or Singularity and [Nextflow](https://www.nextflow.io/).
 
 ```
-nextflow run brwnj/smoove-nf [nextflow options] [smoove-nf options]
+nextflow run brwnj/smoove-nf -latest [nextflow options] [smoove-nf options]
 ```
 
 ### Required parameters
@@ -69,7 +67,15 @@ nextflow run brwnj/smoove-nf [nextflow options] [smoove-nf options]
 + `--bams`
 	+ Aligned sequences in .bam and/or .cram format. Indexes (.bai/.crai) must be
 present.
-	+ Use wildcards like `'SRP1234/alignments/*.cram'` to simplify specifying all of your alignment files.
+	+ Use wildcards like `'SRP1234/alignments/*.cram'` to specify your alignment files.
+
+Note: Nextflow will handle wildcard expansion in this case, so it's critical we quote we the string like:
+
+```
+nextflow run brwnj/smoove-nf -latest \
+	--bams '~/SRP1234/alignments/*.cram'
+```
+
 + `--bed`
 	+ File path to bed of exclude regions for `smoove call`.
 	+ Exclude regions for b37 and GRCh38 are made available by the Hall lab under [speedseq](https://github.com/hall-lab/speedseq/tree/master/annotations).
