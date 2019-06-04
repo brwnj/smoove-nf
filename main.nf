@@ -58,9 +58,6 @@ process smoove_call {
     publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
-    memory { 16.GB * task.attempt }
-    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' }
-    cache 'lenient'
 
     input:
     set sample, file(bam), file(bai) from call_bams
@@ -84,8 +81,6 @@ process smoove_call {
 
 process smoove_merge {
     publishDir path: "$outdir/smoove-merged", mode: "copy"
-    memory 16.GB
-    cache 'deep'
 
     input:
     file vcf from vcfs.collect()
@@ -105,9 +100,6 @@ process smoove_merge {
 process smoove_genotype {
     tag "sample: $sample"
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
-    errorStrategy { task.attempt < 3 ? 'retry' : 'terminate' }
-    memory 16.GB
-    cache 'lenient'
 
     input:
     set sample, file(bam), file(bai) from genotype_bams
@@ -134,9 +126,6 @@ process smoove_genotype {
 process smoove_square {
     publishDir path: "$outdir/smoove-squared", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/bpbio", mode: "copy", pattern: "*.html"
-    cpus 3
-    memory 64.GB
-    cache 'deep'
 
     input:
     file vcf from genotyped_vcfs.collect()
@@ -160,8 +149,6 @@ process smoove_square {
 
 process run_indexcov {
     publishDir path: "$outdir/indexcov", mode: "copy"
-    memory 8.GB
-    cache 'deep'
 
     input:
     file idx from index_ch.collect()
