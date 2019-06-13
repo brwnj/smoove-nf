@@ -102,7 +102,9 @@ nextflow run brwnj/smoove-nf -latest \
 	+ VCF of known polymorphic sites -- download links can be found at https://github.com/brentp/somalier/releases, but any set of common variants will work
 	+ **default:** false
 + `--ped`
+	+ optional, but required in order to run `somalier relate` and generate somalier's HTML report
 	+ sample relationship definitions
+	+ **default:** false
 
 
 ## Updating
