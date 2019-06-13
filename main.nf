@@ -10,6 +10,10 @@ if( !params.outdir ) { exit 1, "--outdir is not defined" }
 params.gff = false
 if( !params.gff ) { exit 1, "--gff is not defined" }
 
+// somalier
+params.known_sites = false
+params.ped = false
+
 // variables
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
@@ -28,6 +32,12 @@ log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
 log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
+if (params.known_sites) {
+log.info("Known sites        (--known-sites)   : ${params.known_sites}")
+}
+if (params.ped) {
+log.info("Pedigree file      (--ped)           : ${params.ped}")
+}
 log.info("Output             (--outdir)        : ${outdir}")
 log.info("\n")
 
@@ -36,6 +46,23 @@ fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
 gff = file(params.gff)
+
+// look for somalier reference VCF
+known_sites_file = false
+if (params.known_sites) {
+    known_sites_file = file(params.known_sites)
+    // check file existence
+    if (!known_sites_file.exists()) {
+        exit 1, "Missing optional known sites file: ${known_sites_file}"
+    }
+}
+ped_file = false
+if (params.ped) {
+    ped_file = file(params.ped)
+    if (!ped_file.exists()) {
+        exit 1, "Missing optional ped file: ${ped_file}"
+    }
+}
 
 // check file existence
 if( !fasta.exists() ) { exit 1, "Missing reference fasta: ${fasta}" }
@@ -47,7 +74,7 @@ if( !gff.exists() ) { exit 1, "Missing annotations: ${gff}" }
 Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName, file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
-    .into { call_bams; genotype_bams }
+    .into { call_bams; genotype_bams; somalier_bams }
 
 Channel
     .fromPath(indexes, checkIfExists: true)
@@ -185,6 +212,50 @@ process build_covviz_report {
 
     script:
     template 'parse_indexcov.py'
+}
+
+process somalier_extract {
+    // requires $sample to match name defined in @RG -- https://github.com/brentp/somalier/blob/master/src/somalier.nim#L18
+    tag "sample: $sample"
+    publishDir path: "$outdir/somalier/extract", mode: "copy"
+
+    input:
+    set sample, file(bam), file(bai) from somalier_bams
+    file known_sites_file
+    file fasta
+    file faidx
+
+    output:
+    file("${sample}.somalier") into somalier_counts
+
+    // can be run even if user does not specify a ped file for `somalier relate`
+    when: params.known_sites != false
+
+    script:
+    """
+    somalier extract --out-dir ./ --fasta $fasta --sites $known_sites_file $bam
+    """
+}
+
+process somalier_relate {
+    tag: "sample: $sample"
+    publishDir path: "$outdir/somalier", mode: "copy"
+
+    input:
+    file somalier_count from somalier_counts.collect()
+    file ped_file
+
+    output:
+    file("pairs.tsv")
+    file("samples.tsv")
+    file("somalier.html")
+
+    when: (params.known_sites != false && params.ped != false)
+
+    script:
+    """
+    somalier relate --ped $ped_file $somalier_count
+    """
 }
 
 process build_report {
