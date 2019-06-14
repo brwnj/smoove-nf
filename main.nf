@@ -217,6 +217,7 @@ process build_covviz_report {
 process somalier_extract {
     // requires $sample to match name defined in @RG -- https://github.com/brentp/somalier/blob/master/src/somalier.nim#L18
     tag "sample: $sample"
+    label 'somalier'
     publishDir path: "$outdir/somalier/extract", mode: "copy"
 
     input:
@@ -239,6 +240,7 @@ process somalier_extract {
 
 process somalier_relate {
     tag "sample: $sample"
+    label 'somalier'
     publishDir path: "$outdir/somalier", mode: "copy"
 
     input:
