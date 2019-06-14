@@ -238,7 +238,7 @@ process somalier_extract {
 }
 
 process somalier_relate {
-    tag: "sample: $sample"
+    tag "sample: $sample"
     publishDir path: "$outdir/somalier", mode: "copy"
 
     input:
