@@ -11,7 +11,7 @@ params.gff = false
 if( !params.gff ) { exit 1, "--gff is not defined" }
 
 // somalier
-params.known_sites = false
+params.knownsites = false
 params.ped = false
 
 // variables
@@ -32,8 +32,8 @@ log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
 log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
-if (params.known_sites) {
-log.info("Known sites        (--known-sites)   : ${params.known_sites}")
+if (params.knownsites) {
+log.info("Known sites        (--knownsites)   : ${params.knownsites}")
 }
 if (params.ped) {
 log.info("Pedigree file      (--ped)           : ${params.ped}")
@@ -48,12 +48,12 @@ bed = file(params.bed)
 gff = file(params.gff)
 
 // look for somalier reference VCF
-known_sites_file = false
-if (params.known_sites) {
-    known_sites_file = file(params.known_sites)
+knownsites_file = false
+if (params.knownsites) {
+    knownsites_file = file(params.knownsites)
     // check file existence
-    if (!known_sites_file.exists()) {
-        exit 1, "Missing optional known sites file: ${known_sites_file}"
+    if (!knownsites_file.exists()) {
+        exit 1, "Missing optional known sites file: ${knownsites_file}"
     }
 }
 ped_file = false
@@ -222,7 +222,7 @@ process somalier_extract {
 
     input:
     set sample, file(bam), file(bai) from somalier_bams
-    file known_sites_file
+    file knownsites_file
     file fasta
     file faidx
 
@@ -230,11 +230,11 @@ process somalier_extract {
     file("${sample}.somalier") into somalier_counts
 
     // can be run even if user does not specify a ped file for `somalier relate`
-    when: params.known_sites != false
+    when: params.knownsites != false
 
     script:
     """
-    somalier extract --out-dir ./ --fasta $fasta --sites $known_sites_file $bam
+    somalier extract --out-dir ./ --fasta $fasta --sites $knownsites_file $bam
     """
 }
 
@@ -252,7 +252,7 @@ process somalier_relate {
     file("samples.tsv")
     file("somalier.html")
 
-    when: (params.known_sites != false && params.ped != false)
+    when: (params.knownsites != false && params.ped != false)
 
     script:
     """
