@@ -97,7 +97,7 @@ nextflow run brwnj/smoove-nf -latest \
     + **default:** 500000
 
 #### [somalier](https://github.com/brentp/somalier) params
-+ `--known-sites`
++ `--knownsites`
 	+ optional, but required in order to run [somalier](https://github.com/brentp/somalier) quality control
 	+ VCF of known polymorphic sites -- download links can be found at https://github.com/brentp/somalier/releases, but any set of common variants will work
 	+ **default:** false
