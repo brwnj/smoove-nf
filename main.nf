@@ -239,7 +239,6 @@ process somalier_extract {
 }
 
 process somalier_relate {
-    tag "sample: $sample"
     label 'somalier'
     publishDir path: "$outdir/somalier", mode: "copy"
 
@@ -248,8 +247,8 @@ process somalier_relate {
     file ped_file
 
     output:
-    file("pairs.tsv")
-    file("samples.tsv")
+    file("somalier.pairs.tsv")
+    file("somalier.samples.tsv")
     file("somalier.html")
 
     when: (params.knownsites != false && params.ped != false)
