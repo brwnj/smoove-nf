@@ -10,6 +10,10 @@ if( !params.outdir ) { exit 1, "--outdir is not defined" }
 params.gff = false
 if( !params.gff ) { exit 1, "--gff is not defined" }
 
+// somalier
+params.knownsites = false
+params.ped = false
+
 // variables
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
@@ -28,6 +32,12 @@ log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
 log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
+if (params.knownsites) {
+log.info("Known sites        (--knownsites)   : ${params.knownsites}")
+}
+if (params.ped) {
+log.info("Pedigree file      (--ped)           : ${params.ped}")
+}
 log.info("Output             (--outdir)        : ${outdir}")
 log.info("\n")
 
@@ -36,6 +46,23 @@ fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = file(params.bed)
 gff = file(params.gff)
+
+// look for somalier reference VCF
+knownsites_file = false
+if (params.knownsites) {
+    knownsites_file = file(params.knownsites)
+    // check file existence
+    if (!knownsites_file.exists()) {
+        exit 1, "Missing optional known sites file: ${knownsites_file}"
+    }
+}
+ped_file = false
+if (params.ped) {
+    ped_file = file(params.ped)
+    if (!ped_file.exists()) {
+        exit 1, "Missing optional ped file: ${ped_file}"
+    }
+}
 
 // check file existence
 if( !fasta.exists() ) { exit 1, "Missing reference fasta: ${fasta}" }
@@ -47,7 +74,7 @@ if( !gff.exists() ) { exit 1, "Missing annotations: ${gff}" }
 Channel
     .fromPath(params.bams, checkIfExists: true)
     .map { file -> tuple(file.baseName, file, file + ("${file}".endsWith('.cram') ? '.crai' : '.bai')) }
-    .into { call_bams; genotype_bams }
+    .into { call_bams; genotype_bams; somalier_bams }
 
 Channel
     .fromPath(indexes, checkIfExists: true)
@@ -138,8 +165,12 @@ process smoove_square {
     file("svvcf.html") into svvcf
 
     script:
+    paste = "smoove paste --outdir ./ --name $project $vcf"
+    if( vcf.size() < 2 ) {
+        paste = "cp $vcf ${project}.smoove.square.vcf.gz && cp $idx ${project}.smoove.square.vcf.gz.csi"
+    }
     """
-    smoove paste --outdir ./ --name $project $vcf
+    $paste
 
     smoove annotate --gff $gff ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
@@ -185,6 +216,51 @@ process build_covviz_report {
 
     script:
     template 'parse_indexcov.py'
+}
+
+process somalier_extract {
+    // requires $sample to match name defined in @RG -- https://github.com/brentp/somalier/blob/master/src/somalier.nim#L18
+    tag "sample: $sample"
+    label 'somalier'
+    publishDir path: "$outdir/somalier/extract", mode: "copy"
+
+    input:
+    set sample, file(bam), file(bai) from somalier_bams
+    file knownsites_file
+    file fasta
+    file faidx
+
+    output:
+    file("${sample}.somalier") into somalier_counts
+
+    // can be run even if user does not specify a ped file for `somalier relate`
+    when: params.knownsites != false
+
+    script:
+    """
+    somalier extract --out-dir ./ --fasta $fasta --sites $knownsites_file $bam
+    """
+}
+
+process somalier_relate {
+    label 'somalier'
+    publishDir path: "$outdir/somalier", mode: "copy"
+
+    input:
+    file somalier_count from somalier_counts.collect()
+    file ped_file
+
+    output:
+    file("somalier.pairs.tsv")
+    file("somalier.samples.tsv")
+    file("somalier.html")
+
+    when: (params.knownsites != false && params.ped != false)
+
+    script:
+    """
+    somalier relate --ped $ped_file $somalier_count
+    """
 }
 
 process build_report {

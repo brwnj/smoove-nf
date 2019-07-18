@@ -72,27 +72,39 @@ nextflow run brwnj/smoove-nf -latest \
 ### Optional parameters
 
 + `--outdir`
-	+ The base results directory for output.
-	+ **Default:** './results'
+	+ The base results directory for output
+	+ **default:** './results'
 + `--exclude`
     + regular expression of chromosomes to skip
 	+ You should escape '$', e.g. `"hs37d5,~:,~^GL,~decoy,~random\$,~chrUn,~_alt\$"`
-    + default: "^GL|^hs|^chrEBV$|M$|MT$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d+$"
+    + **default**: "^GL|^hs|^chrEBV$|M$|MT$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d+$"
 + `--project`
-	+ Acts as the file prefix for merged and squared sites.
-	+ **Default:** 'sites'
+	+ Acts as the file prefix for merged and squared sites
+	+ **default:** 'sites'
 + `--sexchroms`
-	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`.
-	+ **Default:** 'X,Y'
+	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`
+	+ **default:** 'X,Y'
+
+#### [covviz](https://github.com/brwnj/covviz) params
 + `--zthreshold`
     + a sample must greater than this many standard deviations in order to be found significant
-    + default: 3.5
+    + **default:** 3.5
 + `--distancethreshold`
     + consecutive significant points must span this distance in order to pass this filter
-    + default: 150000
+    + **default:** 150000
 + `--slop`
     + leading and trailing segments added to significant regions to make them more visible
-    + default: 500000
+    + **default:** 500000
+
+#### [somalier](https://github.com/brentp/somalier) params
++ `--knownsites`
+	+ optional, but required in order to run [somalier](https://github.com/brentp/somalier) quality control
+	+ VCF of known polymorphic sites -- download links can be found at https://github.com/brentp/somalier/releases, but any set of common variants will work
+	+ **default:** false
++ `--ped`
+	+ optional, but required in order to run `somalier relate` and generate somalier's HTML report
+	+ sample relationship definitions
+	+ **default:** false
 
 
 ## Updating
