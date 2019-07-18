@@ -166,7 +166,7 @@ process smoove_square {
 
     script:
     paste = "smoove paste --outdir ./ --name $project $vcf"
-    if( vcf.size() < 2 ) {
+    if( vcf.collect().size() < 2 ) {
         paste = "cp $vcf ${project}.smoove.square.vcf.gz && cp $idx ${project}.smoove.square.vcf.gz.csi"
     }
     """
