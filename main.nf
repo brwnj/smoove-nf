@@ -165,8 +165,12 @@ process smoove_square {
     file("svvcf.html") into svvcf
 
     script:
+    paste = "smoove paste --outdir ./ --name $project $vcf"
+    if( vcf.size() < 2 ) {
+        paste = "cp $vcf ${project}.smoove.square.vcf.gz && cp $idx ${project}.smoove.square.vcf.gz.csi"
+    }
     """
-    smoove paste --outdir ./ --name $project $vcf
+    $paste
 
     smoove annotate --gff $gff ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
