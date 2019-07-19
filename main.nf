@@ -81,7 +81,6 @@ Channel
     .set { index_ch }
 
 process smoove_call {
-    tag "sample: $sample"
     publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
@@ -125,7 +124,6 @@ process smoove_merge {
 }
 
 process smoove_genotype {
-    tag "sample: $sample"
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
 
     input:
@@ -220,7 +218,6 @@ process build_covviz_report {
 
 process somalier_extract {
     // requires $sample to match name defined in @RG -- https://github.com/brentp/somalier/blob/master/src/somalier.nim#L18
-    tag "sample: $sample"
     label 'somalier'
     publishDir path: "$outdir/somalier/extract", mode: "copy"
 
