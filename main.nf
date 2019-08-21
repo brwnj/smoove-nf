@@ -16,6 +16,7 @@ params.ped = false
 
 // variables
 homref = params.homref ?: false
+noextrafilters = params.noextrafilters ?: false
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
@@ -99,9 +100,12 @@ process smoove_call {
     file("${sample}-smoove-call.log") into sequence_counts
 
     script:
-    excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ''
+    excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ""
+    filters = noextrafilters ? "--noextrafilters" : ""
     """
-    smoove call --genotype --name $sample --processes ${task.cpus} --fasta $fasta --exclude $bed $excludechroms $bam 2> ${sample}-smoove-call.log
+    smoove call --genotype --name $sample --processes ${task.cpus} \
+        --fasta $fasta --exclude $bed $excludechroms $filters \
+        $bam 2> ${sample}-smoove-call.log
     bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
     """
 }
@@ -204,7 +208,7 @@ process run_indexcov {
 
 process build_covviz_report {
     publishDir path: "$outdir", mode: "copy", pattern: "*.html"
-    container 'jupyter/scipy-notebook:7d427e7a4dde'
+    label 'covviz'
     cache 'lenient'
 
     input:
@@ -217,7 +221,11 @@ process build_covviz_report {
     file("covviz_report.html")
 
     script:
-    template 'parse_indexcov.py'
+    """
+    covviz --min-samples ${params.minsamples} --sex-chroms ${params.sexchroms} --exclude '${params.exclude}' \
+        --z-threshold ${params.zthreshold} --distance-threshold ${params.distancethreshold} \
+        --slop ${params.slop} --ped ${ped} --gff ${gff} ${bed} ${roc}
+    """
 }
 
 process somalier_extract {
