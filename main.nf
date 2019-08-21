@@ -15,6 +15,11 @@ params.knownsites = false
 params.ped = false
 
 // variables
+params.ped = false
+custom_ped = false
+if (params.ped) {
+    custom_ped = file(params.ped)
+}
 homref = params.homref ?: false
 noextrafilters = params.noextrafilters ?: false
 project = params.project ?: 'sites'
@@ -171,12 +176,12 @@ process smoove_square {
     file("svvcf.html") into svvcf
 
     script:
-    paste = "smoove paste --outdir ./ --name $project $vcf"
+    smoovepaste = "smoove paste --outdir ./ --name $project $vcf"
     if( vcf.collect().size() < 2 ) {
         paste = "cp $vcf ${project}.smoove.square.vcf.gz && cp $idx ${project}.smoove.square.vcf.gz.csi"
     }
     """
-    $paste
+    $smoovepaste
 
     smoove annotate --gff $gff ${project}.smoove.square.vcf.gz | bgzip --threads ${task.cpus} -c > ${project}.smoove.square.anno.vcf.gz
     bcftools index ${project}.smoove.square.anno.vcf.gz
@@ -194,16 +199,33 @@ process run_indexcov {
     output:
     file("${project}*.png")
     file("*.html")
-    file("${project}*.bed.gz") into coverage_bed
-    file("${project}*.ped") into ped
-    file("${project}*.roc") into roc
+    file("${project}*.bed.gz") into bed_ch
+    file("${project}*.ped") into ped_ch
+    file("${project}*.roc") into roc_ch
 
     script:
-    excludepatt = params.exclude ? "--excludepatt \"${params.exclude}\"" : ''
+    excludepatt = params.exclude ? "--excludepatt \"${params.exclude}\"" : ""
     """
     goleft indexcov --sex $sexchroms $excludepatt --directory $project --fai $faidx $idx
     mv $project/* .
     """
+}
+
+// account for optional, custom ped and the need to merge that with indexcov output
+(merge_ch, report_ch) = (params.ped ? [ped_ch, Channel.empty()]: [Channel.empty(), ped_ch])
+
+process merge_peds {
+    label 'covviz'
+
+    input:
+    file ped from merge_ch
+    file custom_ped
+
+    output:
+    file 'merged.ped' into merged_ch
+
+    script:
+    template 'merge_peds.py'
 }
 
 process build_covviz_report {
@@ -212,9 +234,9 @@ process build_covviz_report {
     cache 'lenient'
 
     input:
-    file pedfile from ped
-    file rocfile from roc
-    file bedfile from coverage_bed
+    file ped from report_ch.mix(merged_ch).collect()
+    file roc from roc_ch
+    file bed from bed_ch
     file gff
 
     output:
