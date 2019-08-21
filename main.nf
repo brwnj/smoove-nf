@@ -15,11 +15,6 @@ params.knownsites = false
 params.ped = false
 
 // variables
-params.ped = false
-custom_ped = false
-if (params.ped) {
-    custom_ped = file(params.ped)
-}
 homref = params.homref ?: false
 noextrafilters = params.noextrafilters ?: false
 project = params.project ?: 'sites'
@@ -63,11 +58,11 @@ if (params.knownsites) {
         exit 1, "Missing optional known sites file: ${knownsites_file}"
     }
 }
-ped_file = false
+custom_ped = false
 if (params.ped) {
-    ped_file = file(params.ped)
-    if (!ped_file.exists()) {
-        exit 1, "Missing optional ped file: ${ped_file}"
+    custom_ped = file(params.ped)
+    if (!custom_ped.exists()) {
+        exit 1, "Missing optional ped file: ${custom_ped}"
     }
 }
 
@@ -279,7 +274,7 @@ process somalier_relate {
 
     input:
     file somalier_count from somalier_counts.collect()
-    file ped_file
+    file custom_ped
 
     output:
     file("somalier.pairs.tsv")
@@ -290,7 +285,7 @@ process somalier_relate {
 
     script:
     """
-    somalier relate --ped $ped_file $somalier_count
+    somalier relate --ped $custom_ped $somalier_count
     """
 }
 
