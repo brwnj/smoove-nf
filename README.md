@@ -84,6 +84,9 @@ nextflow run brwnj/smoove-nf -latest \
 + `--sexchroms`
 	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`
 	+ **default:** 'X,Y'
++ `--homref`
+    + Keep hom-ref variants that are normally filtered when using `smoove genotype`
+    + **default:** false
 
 #### [covviz](https://github.com/brwnj/covviz) params
 + `--zthreshold`

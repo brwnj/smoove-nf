@@ -15,6 +15,7 @@ params.knownsites = false
 params.ped = false
 
 // variables
+homref = params.homref ?: false
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
@@ -137,7 +138,10 @@ process smoove_genotype {
     file("${sample}-smoove.genotyped.vcf.gz") into genotyped_vcfs
 
     script:
+    include_homref = params.homref ? "export SMOOVE_KEEP_ALL=KEEP" : ""
     """
+    $include_homref
+
     wget -q https://raw.githubusercontent.com/samtools/samtools/develop/misc/seq_cache_populate.pl
     perl seq_cache_populate.pl -root \$(pwd)/cache $fasta 1> /dev/null 2> err || (cat err; exit 2)
     export REF_PATH=\$(pwd)/cache/%2s/%2s/%s:http://www.ebi.ac.uk/ena/cram/md5/%s
