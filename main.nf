@@ -195,7 +195,7 @@ process run_indexcov {
     file("${project}*.png")
     file("*.html")
     file("${project}*.bed.gz") into bed_ch
-    file("${project}*.ped") into ped_ch
+    file("${project}*.ped") into { ped_ch; report_ped_ch }
     file("${project}*.roc") into roc_ch
 
     script:
@@ -297,7 +297,7 @@ process build_report {
     file sequence_count from sequence_counts.collect()
     file variant_count from variant_counts.collect()
     file vcf from square_vcf
-    file pedfile from ped
+    file pedfile from report_ped_ch
     file variant_html from svvcf
 
     output:
