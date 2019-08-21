@@ -84,6 +84,10 @@ nextflow run brwnj/smoove-nf -latest \
 + `--sexchroms`
 	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`
 	+ **default:** 'X,Y'
++ `--noextrafilters`
+    + Run `smoove call` with `--noextrafilters` to use lumpy_filter only without extra smoove filters
+    + This option will increase sensitivity
+    + **default:** false
 + `--homref`
     + Keep hom-ref variants that are normally filtered when using `smoove genotype`
     + **default:** false
@@ -98,6 +102,9 @@ nextflow run brwnj/smoove-nf -latest \
 + `--slop`
     + leading and trailing segments added to significant regions to make them more visible
     + **default:** 500000
++ `--minsamples`
+    + Show all traces when analyzing this few samples; ignores z-threshold, distance-threshold, and slop
+    + **default:** 8
 
 #### [somalier](https://github.com/brentp/somalier) params
 + `--knownsites`
