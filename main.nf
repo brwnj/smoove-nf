@@ -195,7 +195,7 @@ process run_indexcov {
     file("${project}*.png")
     file("*.html")
     file("${project}*.bed.gz") into bed_ch
-    file("${project}*.ped") into { ped_ch; report_ped_ch }
+    file("${project}*.ped") into indexcov_ped_ch
     file("${project}*.roc") into roc_ch
 
     script:
@@ -205,6 +205,8 @@ process run_indexcov {
     mv $project/* .
     """
 }
+
+indexcov_ped_ch.into { ped_ch; report_ped_ch }
 
 // account for optional, custom ped and the need to merge that with indexcov output
 (merge_ch, report_ch) = (params.ped ? [ped_ch, Channel.empty()]: [Channel.empty(), ped_ch])
