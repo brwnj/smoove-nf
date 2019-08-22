@@ -15,8 +15,7 @@ params.knownsites = false
 params.ped = false
 
 // variables
-homref = params.homref ?: false
-noextrafilters = params.noextrafilters ?: false
+params.sensitive = false
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
@@ -35,7 +34,7 @@ log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
 if (params.knownsites) {
-log.info("Known sites        (--knownsites)   : ${params.knownsites}")
+log.info("Known sites        (--knownsites)    : ${params.knownsites}")
 }
 if (params.ped) {
 log.info("Pedigree file      (--ped)           : ${params.ped}")
@@ -101,7 +100,7 @@ process smoove_call {
 
     script:
     excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ""
-    filters = noextrafilters ? "--noextrafilters" : ""
+    filters = params.sensitive ? "--noextrafilters" : ""
     """
     smoove call --genotype --name $sample --processes ${task.cpus} \
         --fasta $fasta --exclude $bed $excludechroms $filters \
@@ -142,7 +141,7 @@ process smoove_genotype {
     file("${sample}-smoove.genotyped.vcf.gz") into genotyped_vcfs
 
     script:
-    include_homref = params.homref ? "export SMOOVE_KEEP_ALL=KEEP" : ""
+    include_homref = params.sensitive ? "export SMOOVE_KEEP_ALL=KEEP" : ""
     """
     $include_homref
 

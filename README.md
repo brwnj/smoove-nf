@@ -84,12 +84,8 @@ nextflow run brwnj/smoove-nf -latest \
 + `--sexchroms`
 	+ Comma delimited names of the sex chromosome(s) used to infer sex, e.g. `--sexchroms 'chrX,chrY'`
 	+ **default:** 'X,Y'
-+ `--noextrafilters`
-    + Run `smoove call` with `--noextrafilters` to use lumpy_filter only without extra smoove filters
-    + This option will increase sensitivity
-    + **default:** false
-+ `--homref`
-    + Keep hom-ref variants that are normally filtered when using `smoove genotype`
++ `--sensitive`
+    + Preserves more variants from being filtered throughout the workflow
     + **default:** false
 
 #### [covviz](https://github.com/brwnj/covviz) params
