@@ -231,7 +231,6 @@ process build_covviz_report {
 
     input:
     file ped from report_ch.mix(merged_ch).collect()
-    file roc from roc_ch
     file bed from bed_ch
     file gff
 
@@ -241,8 +240,8 @@ process build_covviz_report {
     script:
     """
     covviz --min-samples ${params.minsamples} --sex-chroms ${params.sexchroms} --exclude '${params.exclude}' \
-        --z-threshold ${params.zthreshold} --distance-threshold ${params.distancethreshold} \
-        --slop ${params.slop} --ped ${ped} --gff ${gff} ${bed} ${roc}
+        --skip-norm --z-threshold ${params.zthreshold} --distance-threshold ${params.distancethreshold} \
+        --slop ${params.slop} --ped ${ped} --gff ${gff} ${bed}
     """
 }
 
