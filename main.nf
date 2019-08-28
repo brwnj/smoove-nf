@@ -23,7 +23,7 @@ outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 if (params.sensitive) {
-    env.SMOOVE_KEEP_ALL="KEEP"
+    env.SMOOVE_KEEP_ALL = "KEEP"
 }
 
 log.info("\n")
