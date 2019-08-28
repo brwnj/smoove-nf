@@ -22,10 +22,6 @@ sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
-// if (params.sensitive) {
-//     env.SMOOVE_KEEP_ALL = "KEEP"
-// }
-
 log.info("\n")
 log.info("Project            (--project)       : ${project}")
 log.info("Excluded regions   (--bed)           : ${params.bed}")
@@ -85,6 +81,11 @@ Channel
     .fromPath(indexes, checkIfExists: true)
     .set { index_ch }
 
+Channel
+    .from(params.sensitive ? "KEEP" : "FALSE")
+    .set {sensitive_ch}
+
+
 process smoove_call {
     publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
@@ -135,6 +136,7 @@ process smoove_genotype {
     publishDir path: "$outdir/smoove-genotyped", mode: "copy"
 
     input:
+    env SMOOVE_KEEP_ALL from sensitive_ch
     set sample, file(bam), file(bai) from genotype_bams
     file sites
     file fasta
