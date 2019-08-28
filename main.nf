@@ -22,6 +22,10 @@ sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
+if (params.sensitive) {
+    env.SMOOVE_KEEP_ALL="KEEP"
+}
+
 log.info("\n")
 log.info("Project            (--project)       : ${project}")
 log.info("Excluded regions   (--bed)           : ${params.bed}")
@@ -141,10 +145,7 @@ process smoove_genotype {
     file("${sample}-smoove.genotyped.vcf.gz") into genotyped_vcfs
 
     script:
-    include_homref = params.sensitive ? "export SMOOVE_KEEP_ALL=KEEP" : ""
     """
-    $include_homref
-
     wget -q https://raw.githubusercontent.com/samtools/samtools/develop/misc/seq_cache_populate.pl
     perl seq_cache_populate.pl -root \$(pwd)/cache $fasta 1> /dev/null 2> err || (cat err; exit 2)
     export REF_PATH=\$(pwd)/cache/%2s/%2s/%s:http://www.ebi.ac.uk/ena/cram/md5/%s
