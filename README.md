@@ -64,10 +64,10 @@ nextflow run brwnj/smoove-nf -latest \
 	+ Exclude regions for b37 and GRCh38 are made available by the Hall lab under [speedseq](https://github.com/hall-lab/speedseq/tree/master/annotations).
 + `--fasta`
 	+ File path to reference fasta. Index (.fai) must be present.
-	+ GRCh38 at [1k Genomes](ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/GRCh38_reference_genome)
+	+ GRCh38 is available at: ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/GRCh38_reference_genome
 + `--gff`
-	+ Annotation GFF used in `smoove annotate`.
-	+ GRCh38 reference is available via [Ensembl](ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz)
+	+ Annotation GFF used to annotate variants.
+	+ GRCh38 reference is available at: ftp://ftp.ensembl.org/pub/release-95/gff3/homo_sapiens/Homo_sapiens.GRCh38.95.chr.gff3.gz
 
 ### Optional parameters
 
@@ -76,8 +76,8 @@ nextflow run brwnj/smoove-nf -latest \
 	+ **default:** './results'
 + `--exclude`
     + regular expression of chromosomes to skip
-	+ You should escape '$', e.g. `"hs37d5,~:,~^GL,~decoy,~random\$,~chrUn,~_alt\$"`
-    + **default**: "^GL|^hs|^chrEBV$|M$|MT$|^NC|_random$|Un_|^HLA\\-|_alt$|hap\\d+$"
+	+ You should escape '$', e.g. `"~random\$,~_alt\$"`
+    + **default**: "~^HLA,~^hs,~:,~^GL,~M,~EBV,~^NC,~^phix,~decoy,~random\$,~Un,~hap,~_alt\$"
 + `--project`
 	+ Acts as the file prefix for merged and squared sites
 	+ **default:** 'sites'
