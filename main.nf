@@ -39,6 +39,7 @@ log.info("Known sites        (--knownsites)    : ${params.knownsites}")
 if (params.ped) {
 log.info("Pedigree file      (--ped)           : ${params.ped}")
 }
+log.info("Sensitive          (--sensitive)     : ${params.sensitive}")
 log.info("Output             (--outdir)        : ${outdir}")
 log.info("\n")
 
@@ -83,11 +84,11 @@ Channel
 
 Channel
     .from(params.sensitive ? "KEEP" : "FALSE")
-    .set {sensitive_ch}
+    .set { sensitive_ch }
 
 
 process smoove_call {
-    publishDir path: "$outdir/smoove-called", mode: "copy", pattern: "*.vcf.gz*"
+    publishDir path: "$outdir/smoove/called", mode: "copy", pattern: "*.vcf.gz*"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-stats.txt"
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
 
@@ -115,7 +116,7 @@ process smoove_call {
 }
 
 process smoove_merge {
-    publishDir path: "$outdir/smoove-merged", mode: "copy"
+    // publishDir path: "$outdir/smoove/merged", mode: "copy"
 
     input:
     file vcf from vcfs.collect()
@@ -133,7 +134,7 @@ process smoove_merge {
 }
 
 process smoove_genotype {
-    publishDir path: "$outdir/smoove-genotyped", mode: "copy"
+    publishDir path: "$outdir/smoove/genotyped", mode: "copy"
 
     input:
     env SMOOVE_KEEP_ALL from sensitive_ch
@@ -159,8 +160,8 @@ process smoove_genotype {
 }
 
 process smoove_square {
-    publishDir path: "$outdir/smoove-squared", mode: "copy", pattern: "*.vcf.gz*"
-    publishDir path: "$outdir/bpbio", mode: "copy", pattern: "*.html"
+    publishDir path: "$outdir/smoove/annotated", mode: "copy", pattern: "*.vcf.gz*"
+    publishDir path: "$outdir/reports/bpbio", mode: "copy", pattern: "*.html"
 
     input:
     file vcf from genotyped_vcfs.collect()
@@ -187,7 +188,7 @@ process smoove_square {
 }
 
 process run_indexcov {
-    publishDir path: "$outdir/indexcov", mode: "copy"
+    publishDir path: "$outdir/reports/indexcov", mode: "copy"
 
     input:
     file idx from index_ch.collect()
@@ -228,7 +229,7 @@ process merge_peds {
 }
 
 process build_covviz_report {
-    publishDir path: "$outdir", mode: "copy", pattern: "*.html"
+    publishDir path: "$outdir/reports", mode: "copy", pattern: "*.html"
     label 'covviz'
     cache 'lenient'
 
@@ -293,7 +294,7 @@ process somalier_relate {
 }
 
 process build_report {
-    publishDir path: "$outdir", mode: "copy", pattern: "*.html", overwrite: true
+    publishDir path: "$outdir/reports", mode: "copy", pattern: "*.html", overwrite: true
     cache false
 
     input:
