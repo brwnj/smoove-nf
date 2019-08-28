@@ -22,9 +22,9 @@ sexchroms = sexchroms.replaceAll(" ", "")
 outdir = params.outdir
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
-if (params.sensitive) {
-    env.SMOOVE_KEEP_ALL = "KEEP"
-}
+// if (params.sensitive) {
+//     env.SMOOVE_KEEP_ALL = "KEEP"
+// }
 
 log.info("\n")
 log.info("Project            (--project)       : ${project}")
