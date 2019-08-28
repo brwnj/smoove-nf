@@ -1,3 +1,70 @@
+params.help = false
+if (params.help) {
+    log.info """
+    -----------------------------------------------------------------------
+
+    smoove-nf: a smoove workflow
+    ============================
+
+    Documentation and issues can be found at: https://github.com/brwnj/smoove-nf
+
+    smoove is available at: https://github.com/brentp/smoove
+
+    Required arguments:
+    -------------------
+
+    --bams                Aligned sequences in .bam and/or .cram format.
+                          Indexes (.bai/.crai) must be present.
+    --bed                 Bed of exclude regions for `smoove call`.
+    --fasta               Reference FASTA. Index (.fai) must exist in same
+                          directory.
+    --gff                 Annotation GFF used to annotate variants.
+
+    Options:
+    --------
+
+    --outdir              Base results directory for output.
+                          Default: '/.results'
+    --exclude             Regular expression of chromosomes to skip.
+                          Default: "~^HLA,~^hs,~:,~^GL,~M,~EBV,~^NC,~^phix,~decoy,~random\$,~Un,~hap,~_alt\$"
+    --project             File prefix for merged and annotated VCF files.
+                          Default: 'sites'
+    --sexchroms           Comma delimited names of the sex chromosome(s)
+                          used to infer sex. Default: 'X,Y'
+    --sensitive           Preserves more variants from being filtered
+                          throughout the workflow. Default: false
+
+    covviz options:
+    ---------------
+
+    --zthreshold          A sample must greater than this many standard
+                          deviations in order to be found significant.
+                          Default: 3.5
+    --distancethreshold   Consecutive significant points must span this
+                          distance in order to pass this filter. Default:
+                          150000
+    --slop                Leading and trailing segments added to
+                          significant regions to make them more visible.
+                          Default: 500000
+    --minsamples          Show all traces when analyzing this few samples;
+                          ignores z-threshold, distance-threshold, and
+                          slop. Default: 8
+
+    somalier options:
+    -----------------
+
+    --knownsites          VCF of known polymorphic sites. Download links
+                          can be found at:
+                          https://github.com/brentp/somalier/releases
+                          Default: false
+    --ped                 Sample relationship definitions. Default: false
+
+    -----------------------------------------------------------------------
+    """.stripIndent()
+    exit 0
+}
+
+
 // required arguments
 params.bed = false
 if( !params.bed ) { exit 1, "--bed is not defined" }
@@ -5,8 +72,6 @@ params.fasta = false
 if( !params.fasta ) { exit 1, "--fasta is not defined" }
 params.bams = false
 if( !params.bams ) { exit 1, "--bams is not defined" }
-params.outdir = false
-if( !params.outdir ) { exit 1, "--outdir is not defined" }
 params.gff = false
 if( !params.gff ) { exit 1, "--gff is not defined" }
 
@@ -19,7 +84,7 @@ params.sensitive = false
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
-outdir = params.outdir
+outdir = params.outdir ?: './results'
 indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 log.info("\n")
