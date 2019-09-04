@@ -149,7 +149,7 @@ Channel
 
 Channel
     .from(params.sensitive ? "KEEP" : "FALSE")
-    .set { sensitive_ch }
+    .into { sensitive_call_ch; sensitive_genotype_ch }
 
 
 process smoove_call {
@@ -158,6 +158,7 @@ process smoove_call {
     publishDir path: "$outdir/logs", mode: "copy", pattern: "*-smoove-call.log"
 
     input:
+    env SMOOVE_KEEP_ALL from sensitive_call_ch
     set sample, file(bam), file(bai) from call_bams
     file fasta
     file faidx
@@ -202,7 +203,7 @@ process smoove_genotype {
     publishDir path: "$outdir/smoove/genotyped", mode: "copy"
 
     input:
-    env SMOOVE_KEEP_ALL from sensitive_ch
+    env SMOOVE_KEEP_ALL from sensitive_genotype_ch
     set sample, file(bam), file(bai) from genotype_bams
     file sites
     file fasta
