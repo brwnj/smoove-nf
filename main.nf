@@ -148,7 +148,8 @@ Channel
     .set { index_ch }
 
 Channel
-    .from(params.sensitive ? "KEEP" : "FALSE")
+    .fromPath(params.bams)
+    .map(sensitive -> params.sensitive ? "KEEP" : "FALSE")
     .into { sensitive_call_ch; sensitive_genotype_ch }
 
 
