@@ -149,7 +149,7 @@ Channel
 
 Channel
     .fromPath(params.bams)
-    .map(sensitive -> params.sensitive ? "KEEP" : "FALSE")
+    .map(params.sensitive ? "KEEP" : "FALSE")
     .into { sensitive_call_ch; sensitive_genotype_ch }
 
 
