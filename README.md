@@ -45,6 +45,12 @@ A Docker container is maintained in parallel with this workflow (https://hub.doc
 nextflow run brwnj/smoove-nf -latest [nextflow options] [smoove-nf options]
 ```
 
+Running this using provided containers can be accomplished using the `docker` profile:
+
+```
+nextflow run brwnj/smoove-nf -latest -profile docker [nextflow options] [smoove-nf options]
+```
+
 ### Required parameters
 
 + `--bams`
