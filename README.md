@@ -54,8 +54,7 @@ nextflow run brwnj/smoove-nf -latest -profile docker [nextflow options] [smoove-
 ### Required parameters
 
 + `--bams`
-	+ Aligned sequences in .bam and/or .cram format. Indexes (.bai/.crai) must be
-present.
+	+ Aligned sequences in .bam and/or .cram format. Indexes (.bai/.crai) must be present.
 	+ Use wildcards like `'SRP1234/alignments/*.cram'` to specify your alignment files.
 
 Note: Nextflow will handle wildcard expansion in this case, so it's critical we quote we the string like:
