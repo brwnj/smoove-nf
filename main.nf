@@ -177,7 +177,7 @@ process smoove_call {
     """
     smoove call --genotype --name $sample --processes ${task.cpus} \
         --fasta $fasta --exclude $bed $excludechroms $filters \
-        $bam 2> ${sample}-smoove-call.log
+        $bam 2> >(tee -a ${sample}-smoove-call.log >&2)
     bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
     """
 }
