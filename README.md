@@ -64,9 +64,6 @@ nextflow run brwnj/smoove-nf -latest \
 	--bams '~/SRP1234/alignments/*.cram'
 ```
 
-+ `--bed`
-	+ File path to bed of exclude regions for `smoove call`.
-	+ Exclude regions for b37 and GRCh38 are made available by the Hall lab under [speedseq](https://github.com/hall-lab/speedseq/tree/master/annotations).
 + `--fasta`
 	+ File path to reference fasta. Index (.fai) must be present.
 	+ GRCh38 is available at: ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/reference/GRCh38_reference_genome
@@ -79,6 +76,9 @@ nextflow run brwnj/smoove-nf -latest \
 + `--outdir`
 	+ The base results directory for output
 	+ **default:** './results'
++ `--bed`
+	+ File path to bed of exclude regions for `smoove call`.
+	+ Exclude regions for b37 and GRCh38 are made available by the Hall lab under [speedseq](https://github.com/hall-lab/speedseq/tree/master/annotations).
 + `--exclude`
     + regular expression of chromosomes to skip
 	+ You should escape '$', e.g. `"~random\$,~_alt\$"`
