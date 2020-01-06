@@ -15,7 +15,6 @@ if (params.help) {
 
     --bams                Aligned sequences in .bam and/or .cram format.
                           Indexes (.bai/.crai) must be present.
-    --bed                 Bed of exclude regions for `smoove call`.
     --fasta               Reference FASTA. Index (.fai) must exist in same
                           directory.
     --gff                 Annotation GFF used to annotate variants.
@@ -25,6 +24,7 @@ if (params.help) {
 
     --outdir              Base results directory for output.
                           Default: '/.results'
+    --bed                 Bed of exclude regions for `smoove call`.
     --exclude             Regular expression of chromosomes to skip.
                           Default: "~^HLA,~^hs,~:,~^GL,~M,~EBV,~^NC,~^phix,~decoy,~random\$,~Un,~hap,~_alt\$"
     --project             File prefix for merged and annotated VCF files.
@@ -66,8 +66,6 @@ if (params.help) {
 
 
 // required arguments
-params.bed = false
-if( !params.bed ) { exit 1, "--bed is not defined" }
 params.fasta = false
 if( !params.fasta ) { exit 1, "--fasta is not defined" }
 params.bams = false
@@ -89,9 +87,11 @@ indexes = params.bams + ("${params.bams}".endsWith('.cram') ? '.crai' : '.bai')
 
 log.info("\n")
 log.info("Project            (--project)       : ${project}")
-log.info("Excluded regions   (--bed)           : ${params.bed}")
-if( params.exclude ) {
-log.info("Excluded chroms    (--exclude)       : ${params.exclude}")
+if (params.bed) {
+    log.info("Excluded regions   (--bed)           : ${params.bed}")
+}
+if (params.exclude) {
+    log.info("Excluded chroms    (--exclude)       : ${params.exclude}")
 }
 log.info("Reference fasta    (--fasta)         : ${params.fasta}")
 log.info("Sex chromosomes    (--sexchroms)     : ${sexchroms}")
@@ -99,10 +99,10 @@ log.info("Alignments         (--bams)          : ${params.bams}")
 log.info("Indexes                              : ${indexes}")
 log.info("Annotation GFF     (--gff)           : ${params.gff}")
 if (params.knownsites) {
-log.info("Known sites        (--knownsites)    : ${params.knownsites}")
+    log.info("Known sites        (--knownsites)    : ${params.knownsites}")
 }
 if (params.ped) {
-log.info("Pedigree file      (--ped)           : ${params.ped}")
+    log.info("Pedigree file      (--ped)           : ${params.ped}")
 }
 log.info("Sensitive          (--sensitive)     : ${params.sensitive}")
 log.info("Output             (--outdir)        : ${outdir}")
@@ -111,7 +111,8 @@ log.info("\n")
 // instantiate files
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
-bed = file(params.bed)
+params.bed = false
+bed = params.bed ? file(params.bed) : params.bed
 gff = file(params.gff)
 
 // look for somalier reference VCF
@@ -132,10 +133,18 @@ if (params.ped) {
 }
 
 // check file existence
-if( !fasta.exists() ) { exit 1, "Missing reference fasta: ${fasta}" }
-if( !faidx.exists() ) { exit 1, "Missing reference fasta index: ${faidx}" }
-if( !bed.exists() ) { exit 1, "Missing exclude regions: ${bed}" }
-if( !gff.exists() ) { exit 1, "Missing annotations: ${gff}" }
+if (!fasta.exists()) {
+    exit 1, "Missing reference fasta: ${fasta}"
+}
+if (!faidx.exists()) {
+    exit 1, "Missing reference fasta index: ${faidx}"
+}
+if (params.bed && !bed.exists()) {
+    exit 1, "Missing exclude regions: ${bed}"
+}
+if (!gff.exists()) {
+    exit 1, "Missing annotations: ${gff}"
+}
 
 
 Channel
@@ -172,15 +181,17 @@ process smoove_call {
     file("${sample}-smoove-call.log") into sequence_counts
 
     script:
-    excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ""
-    filters = params.sensitive ? "--noextrafilters" : ""
+    def excludechroms = params.exclude ? "--excludechroms \"${params.exclude}\"" : ""
+    def filters = params.sensitive ? "--noextrafilters" : ""
+    def excluderegions = params.bed ? "--exclude $bed" : ""
     """
     smoove call --genotype --name $sample --processes ${task.cpus} \
-        --fasta $fasta --exclude $bed $excludechroms $filters \
+        --fasta $fasta $excluderegions $excludechroms $filters \
         $bam 2> >(tee -a ${sample}-smoove-call.log >&2)
     bcftools stats ${sample}-smoove.genotyped.vcf.gz > ${sample}-stats.txt
     """
 }
+
 
 process smoove_merge {
     // publishDir path: "$outdir/smoove/merged", mode: "copy"
@@ -199,6 +210,7 @@ process smoove_merge {
     smoove merge --name $project --fasta $fasta $vcf
     """
 }
+
 
 process smoove_genotype {
     publishDir path: "$outdir/smoove/genotyped", mode: "copy"
@@ -225,6 +237,7 @@ process smoove_genotype {
     smoove genotype --duphold --processes ${task.cpus} --removepr --outdir ./ --name ${sample} --fasta $fasta --vcf $sites $bam
     """
 }
+
 
 process smoove_square {
     publishDir path: "$outdir/smoove/annotated", mode: "copy", pattern: "*.vcf.gz*"
@@ -254,6 +267,7 @@ process smoove_square {
     """
 }
 
+
 process run_indexcov {
     publishDir path: "$outdir/reports/indexcov", mode: "copy"
 
@@ -276,10 +290,11 @@ process run_indexcov {
     """
 }
 
-indexcov_ped_ch.into { ped_ch; report_ped_ch }
 
+indexcov_ped_ch.into { ped_ch; report_ped_ch }
 // account for optional, custom ped and the need to merge that with indexcov output
 (merge_ch, report_ch) = (params.ped ? [ped_ch, Channel.empty()]: [Channel.empty(), ped_ch])
+
 
 process merge_peds {
     label 'covviz'
@@ -294,6 +309,7 @@ process merge_peds {
     script:
     template 'merge_peds.py'
 }
+
 
 process build_covviz_report {
     publishDir path: "$outdir/reports", mode: "copy", pattern: "*.html"
@@ -315,6 +331,7 @@ process build_covviz_report {
         --slop ${params.slop} --ped ${ped} --gff ${gff} ${bed}
     """
 }
+
 
 process somalier_extract {
     // requires $sample to match name defined in @RG -- https://github.com/brentp/somalier/blob/master/src/somalier.nim#L18
@@ -339,6 +356,7 @@ process somalier_extract {
     """
 }
 
+
 process somalier_relate {
     label 'somalier'
     publishDir path: "$outdir/somalier", mode: "copy"
@@ -359,6 +377,7 @@ process somalier_relate {
     somalier relate --ped $custom_ped $somalier_count
     """
 }
+
 
 process build_report {
     publishDir path: "$outdir/reports", mode: "copy", pattern: "*.html", overwrite: true
