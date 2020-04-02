@@ -79,6 +79,7 @@ params.ped = false
 
 // variables
 params.sensitive = false
+params.bed = false
 project = params.project ?: 'sites'
 sexchroms = params.sexchroms ?: 'X,Y'
 sexchroms = sexchroms.replaceAll(" ", "")
@@ -111,7 +112,6 @@ log.info("\n")
 // instantiate files
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
-params.bed = false
 bed = params.bed ? file(params.bed) : params.bed
 gff = file(params.gff)
 
@@ -325,10 +325,11 @@ process build_covviz_report {
     file("covviz_report.html")
 
     script:
+    gff_opt = params.gff ? "--gff ${gff}" : ""
     """
     covviz --min-samples ${params.minsamples} --sex-chroms ${params.sexchroms} --exclude '${params.exclude}' \
-        --skip-norm --z-threshold ${params.zthreshold} --distance-threshold ${params.distancethreshold} \
-        --slop ${params.slop} --ped ${ped} --gff ${gff} ${bed}
+        --z-threshold ${params.zthreshold} --distance-threshold ${params.distancethreshold} \
+        --slop ${params.slop} --ped ${ped} ${gff_opt} --skip-norm ${bed}
     """
 }
 
