@@ -82,7 +82,7 @@ nextflow run brwnj/smoove-nf -latest \
 + `--exclude`
     + regular expression of chromosomes to skip
 	+ You should escape '$', e.g. `"~random\$,~_alt\$"`
-    + **default**: "~^HLA,~^hs,~:,~^GL,~M,~EBV,~^NC,~^phix,~decoy,~random\$,~Un,~hap,~_alt\$"
+    + **default**: `"~^HLA,~^hs,~:,~^GL,~M,~EBV,~^NC,~^phix,~decoy,~random\$,~Un,~hap,~_alt\$"`
 + `--project`
 	+ Acts as the file prefix for merged and squared sites
 	+ **default:** 'sites'
