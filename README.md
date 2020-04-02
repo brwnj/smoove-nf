@@ -127,3 +127,9 @@ nextflow pull brwnj/smoove-nf
 ```
 
 That will either pull any changes or confirm you're at the latest version.
+
+Alternatively, when you run the workflow simply use:
+
+```
+nextflow run brwnj/smoove-nf -latest
+```
