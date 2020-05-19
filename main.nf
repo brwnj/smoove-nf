@@ -113,6 +113,7 @@ log.info("\n")
 fasta = file(params.fasta)
 faidx = file("${params.fasta}.fai")
 bed = params.bed ? file(params.bed) : params.bed
+// required in smoove annotate
 gff = file(params.gff)
 
 // look for somalier reference VCF
